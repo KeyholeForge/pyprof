@@ -1,0 +1,33 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local secrets (the course has no LLM, but .env may contain local overrides)
+.env
+
+# The generated data corpus (large, deterministic — reproducible by
+# scripts/gen_corpus.py, do not commit)
+data/corpus/
+data/origin_images/*
+!data/origin_images/.gitkeep
+
+# Profiling artifacts generated during the exercises (py-spy/cProfile/memray/
+# notes ex06/ex10/ex15/ex16) — naming convention: profiles/exNN_*.{svg,html,prof,txt,md}
+*.memray
+*.bin
+.pyroscope/
+profiles/*
+!profiles/.gitkeep
+
+# A directory for temporary py-spy/memray profiles/artifacts generated during
+# the exercises (we do NOT ignore solutions/*.svg or solutions/*.html — they are deliberate
+# reference artifacts, so we do not use a global *.svg/*.html pattern)
+/tmp_profiles/
+
+# build scaffolding (not course content)
+.kurs-build-state.md
+.kurs-build/
+
+# Images uploaded while the application / loadgen runs (clean up with: python scripts/reset_uploads.py)
+data/uploads/

@@ -1,0 +1,60 @@
+# The pixelforge application is NOT in this compose file — it runs locally (uvicorn)
+# for fast iteration between exercises.
+# Ports: pixelforge :8040 (locally), Pyroscope :4040, origin :8041 (Docker, 127.0.0.1 only).
+
+services:
+  pyroscope:
+    # The official grafana/pyroscope:2.4.2 image is distroless (no shell,
+    # curl, wget) — a real health check cannot run in it. So we build
+    # it locally (docker/pyroscope.Dockerfile): the same pyroscope binary
+    # (static Go, no libc dependency) copied onto alpine with curl.
+    build:
+      context: .
+      dockerfile: docker/pyroscope.Dockerfile
+    image: pyprof-pyroscope:2.4.2-curl
+    ports:
+      - "127.0.0.1:4040:4040"
+    volumes:
+      - pyroscope_data:/data
+    healthcheck:
+      # After startup Pyroscope has built-in readiness delays (metastore ~15s,
+      # ingester ~15s, segment writer ~30s, sequential) — the real time to the
+      # first 200 on /ready is about 60-90s. start_period + retries must
+      # cover that, otherwise the health check will falsely report unhealthy.
+      test: ["CMD", "curl", "-f", "http://localhost:4040/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 90s
+    restart: unless-stopped
+
+  origin:
+    # nginx = HTTP/1.1 with keep-alive (python -m http.server speaks HTTP/1.0 and closes
+    # the connection after every response, so keep-alive would have no way to work).
+    build:
+      context: .
+      dockerfile: docker/origin.Dockerfile
+    image: pyprof-origin:nginx1.30-netem
+    cap_add:
+      - NET_ADMIN        # only for tc netem (network delay)
+    environment:
+      # The origin response delay in ms (0 = none). To change it: ORIGIN_DELAY_MS=0 docker compose up -d
+      ORIGIN_DELAY_MS: ${ORIGIN_DELAY_MS:-25}
+    volumes:
+      - ./data/origin_images:/images:ro
+      - ./docker/origin.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:8041:8041"
+    healthcheck:
+      # wget fails for HTTP >=400; the directory listing (200) is enough as a readiness signal.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8041/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  # Pyroscope data survives a restart (docker compose down without -v is safe
+  # to repeat). A clean start = `docker compose down -v`.
+  pyroscope_data:
