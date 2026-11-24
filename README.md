@@ -1,202 +1,179 @@
-# The pyprof course — profiling Python applications, using pixelforge as the example
+# Kurs pyprof — profilowanie aplikacji Python na przykładzie pixelforge
 
-> **Language versions:** this branch (`main`) contains the English course.
-> The Polish version is on the [`polish`](https://github.com/KeyholeForge/pyprof/tree/polish) branch.
-> To switch a local checkout to Polish, run `git switch polish`.
+> **Wersje językowe:** ta gałąź (`polish`) zawiera kurs po polsku.
+> Wersja angielska jest na gałęzi [`main`](https://github.com/KeyholeForge/pyprof/tree/main).
+> Aby przełączyć lokalne repozytorium na wersję angielską, użyj `git switch main`.
 
-A hands-on "learn-by-doing" course: you build the skill of profiling a FastAPI
-application (`pixelforge` — an image-processing service) and watch the effects
-in Grafana Pyroscope. You learn by doing — the profiling layer
-(`app/profiling.py`) starts unfinished, and building it is the content of
-exercises 1, 4, 7 and 11. The rest of the application (upload, thumbnails,
-filters, fetching from a URL, reports) works from the first run — your job is
-to DIAGNOSE and FIX it, not to write it from scratch. The instructions are in
-English.
+Praktyczny kurs „learn-by-doing": budujesz umiejętność profilowania aplikacji
+FastAPI (`pixelforge` — serwis przetwarzania obrazów) i obserwujesz efekty w
+Grafana Pyroscope. Uczysz się przez robienie — warstwa profilowania
+(`app/profiling.py`) startuje nieukończona, a jej budowanie jest treścią
+ćwiczeń 1, 4, 7 i 11. Reszta aplikacji (upload, miniatury, filtry, pobieranie
+z URL, raporty) działa od pierwszego uruchomienia — Twoim zadaniem jest ją
+DIAGNOZOWAĆ i NAPRAWIAĆ, nie pisać od zera. Instrukcje po polsku.
 
-> **Original Polish version verified 2026-11** on: macOS (Docker Desktop),
-> Python 3.14.10 (the application also ran on 3.11), fastapi 0.162.0,
-> starlette 1.10.0, uvicorn 0.54.0, httpx 0.28.1, pillow 13.0.0, memray 1.20.0,
-> py-spy 0.4.2, pyroscope-io 1.4.0, snakeviz 2.2.2, grafana/pyroscope 2.4.2,
-> nginx 1.30 (origin), alpine 3.24. The numbers in the exercises come from a
-> single machine (14 cores) — they are orders of magnitude and ratios, not
-> values to reproduce to the millisecond. This verification covers the original
-> Polish version.
->
-> **English edition verified 2026-11-17** from a fresh clone of the `english`
-> branch on macOS (Docker Desktop, 15.6 GiB), **Python 3.11.17** (the minimum
-> supported version; the Python 3.14 walk-through was done earlier during the
-> translation), same pinned package and image versions as above. Result: the
-> generated corpus is byte-identical to the original (340 files, SHA-256), the
-> unfinished skeleton fails all 16 checks without errors, the reference
-> solutions pass `check.py --all` 16/16 twice, and the skeleton fails 16/16
-> again after restoring it with a clean profile window. Limits: one machine
-> (macOS, not Linux), no `sudo`; the exercise 2 and 10 py-spy steps ran in a
-> Linux container with `SYS_PTRACE`, as the README describes; the optional
-> free-threaded `3.14t` step of exercise 10 also ran (3.06 s with 4 threads).
+> **Kurs zweryfikowany 2026-11** na: macOS (Docker Desktop), Python 3.14.10
+> (aplikacja uruchomiona też na 3.11), fastapi 0.162.0, starlette 1.10.0,
+> uvicorn 0.54.0, httpx 0.28.1, pillow 13.0.0, memray 1.20.0, py-spy 0.4.2,
+> pyroscope-io 1.4.0, snakeviz 2.2.2, grafana/pyroscope 2.4.2, nginx 1.30
+> (origin), alpine 3.24. Liczby w ćwiczeniach pochodzą z jednej maszyny (14
+> rdzeni) — to rzędy wielkości i stosunki, nie wartości do powtórzenia co do
+> milisekundy.
 
-The emphasis is on theory and clear explanations of concepts — start with
-`exercises/00-theory.md`, read `exercises/NNa-*.md` before the blocks, and look
-up definitions in `exercises/glossary.md`.
+Nacisk na teorię i jasne tłumaczenie pojęć — zacznij od `exercises/00-teoria.md`,
+przed blokami czytaj `exercises/NNa-*.md`, definicje szukaj w `slownik.md`.
 
-## Prerequisites
+## Wymagania wstępne
 
-- **Python 3.11–3.14, standard build with the GIL.** The `3.14t` version
-  (free-threaded) is ruled out: `pyroscope-io` does not install on it. Check
-  your interpreter:
+- **Python 3.11–3.14, zwykły build z GIL.** Wersja `3.14t` (free-threaded) odpada:
+  `pyroscope-io` się na niej nie instaluje. Sprawdź swój interpreter:
   `python3.14 -c "import sysconfig; print(sysconfig.get_config_var('Py_GIL_DISABLED'))"`
-  should print `0` (or `None`). Note: `uv venv --python 3.14` may pick the
-  free-threaded build — use `python3.14 -m venv` or check the result with the
-  command above.
-- Python basics (functions, classes, `async`/`await` at the "I can read and
-  understand it" level — you do not need to be able to write advanced asyncio
-  from scratch).
-- The ability to run `docker compose up -d` and read container logs.
-- HTTP basics (what GET/POST and a status code are) — the course does NOT
-  assume prior knowledge of profiling, the GIL, the event loop or any of the
-  tools used in the course (Pyroscope/py-spy/memray/cProfile) — the course
-  teaches them from scratch.
-- Docker with at least ~1 GB of free RAM for Pyroscope + origin. No API keys —
-  the course uses no LLM or cloud service.
+  ma wypisać `0` (albo `None`). Uwaga: `uv venv --python 3.14` potrafi wybrać build
+  free-threaded — używaj `python3.14 -m venv` albo sprawdź wynik powyższym poleceniem.
+- Podstawy Pythona (funkcje, klasy, `async`/`await` na poziomie
+  „czytam i rozumiem", nie musisz umieć pisać zaawansowanego asyncio od zera).
+- Umiejętność uruchomienia `docker compose up -d` i odczytania logów kontenera.
+- Podstawy HTTP (co to GET/POST, kod statusu) — kurs NIE zakłada wcześniejszej
+  wiedzy o profilowaniu, GIL-u, event loopie ani żadnym z narzędzi użytych w
+  kursie (Pyroscope/py-spy/memray/cProfile) — tego uczy kurs od zera.
+- Docker z min. ~1 GB wolnego RAM dla Pyroscope + origin. Brak kluczy API —
+  kurs nie używa żadnego LLM ani usługi chmurowej.
 
-## Architecture
+## Architektura
 
 ```
-   loadgen ──HTTP──▶  pixelforge (locally, 127.0.0.1:8040)
-                          │  topic layer: app/profiling.py (built in ex. 1/4/7/11)
-                          │  domain: upload/thumbnails/filters/fetch/reports (app/*.py)
-                          │  storage: data/uploads/ (runtime), data/corpus/ (corpus)
-                          ├──telemetry (CPU or wall-clock)──▶ Pyroscope (UI :4040)
-                          └──HTTP (image downloads)──▶ origin (nginx, Docker, :8041)
+   loadgen ──HTTP──▶  pixelforge (lokalnie, 127.0.0.1:8040)
+                          │  warstwa-tematu: app/profiling.py (budowana w ćw. 1/4/7/11)
+                          │  domena: upload/miniatury/filtry/fetch/raporty (app/*.py)
+                          │  magazyn: data/uploads/ (runtime), data/corpus/ (korpus)
+                          ├──telemetria (CPU albo wall-clock)──▶ Pyroscope (UI :4040)
+                          └──HTTP (pobieranie obrazów)──▶ origin (nginx, Docker, :8041)
 ```
 
-`origin` is an nginx with HTTP/1.1 keep-alive and an artificial response delay
-of 25 ms (`ORIGIN_DELAY_MS`, `tc netem`) — without it the local network is too
-fast for the flaws in exercises 12–13 to give a measurable signal.
-`GET /nginx_status` shows the number of connections and requests.
+`origin` to nginx z HTTP/1.1 keep-alive i sztucznym opóźnieniem odpowiedzi
+25 ms (`ORIGIN_DELAY_MS`, `tc netem`) — bez niego sieć lokalna jest zbyt szybka,
+żeby wady z ćwiczeń 12–13 dały mierzalny sygnał. `GET /nginx_status` pokazuje
+liczbę połączeń i żądań.
 
-## Quick start
+## Szybki start
 
-0. Create your own working branch: `git switch -c my-exercises` — the exercises
-   modify the application files (`app/images.py`, `app/fetch.py`,
-   `app/storage.py`, `app/reports.py`, `app/profiling.py`, `app/main.py`); the
-   clean `english` branch is a free reset of the course, and `git diff english`
-   will show you at the end everything you have built.
-1. Environment (on macOS plain `python` often does not exist or points to the
-   system 3.9 — give the version explicitly):
+0. Własny branch na pracę: `git switch -c moje-cwiczenia` — ćwiczenia
+   modyfikują pliki aplikacji (`app/images.py`, `app/fetch.py`,
+   `app/storage.py`, `app/reports.py`, `app/profiling.py`, `app/main.py`);
+   czysty `main` to darmowy reset kursu, `git diff main` pokaże na końcu
+   wszystko, co zbudowałeś/aś.
+1. Środowisko (na macOS samo `python` często nie istnieje albo wskazuje
+   systemowe 3.9 — podaj wersję jawnie):
    `python3.14 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
-2. Data corpus: `python scripts/gen_corpus.py` (it must exist BEFORE
-   `docker compose up`, because the `origin` service mounts
-   `data/origin_images` as a read-only volume).
+2. Korpus danych: `python scripts/gen_corpus.py` (musi istnieć PRZED startem
+   `docker compose up`, bo serwis `origin` montuje `data/origin_images` jako
+   wolumen tylko-do-odczytu).
 3. Backend: `docker compose up -d --build --wait` → Pyroscope UI:
-   `http://127.0.0.1:4040` (no login). The first time the images are built, and
-   Pyroscope needs about 60–90 s after startup before `/ready` stops returning
-   503 — `--wait` waits for the `healthy` state.
-4. Variables: `cp .env.example .env` (the course has no secrets — only local
-   addresses).
-5. Start with `exercises/00-theory.md`, then `exercises/01.md`.
+   `http://127.0.0.1:4040` (bez logowania). Pierwszy raz obrazy się budują, a
+   Pyroscope potrzebuje ok. 60–90 s po starcie, zanim `/ready` przestanie
+   zwracać 503 — `--wait` czeka na stan `healthy`.
+4. Zmienne: `cp .env.example .env` (kurs nie ma sekretów — same lokalne adresy).
+5. Zacznij od `exercises/00-teoria.md`, potem `exercises/01.md`.
 
-## Running the application
+## Uruchamianie aplikacji
 
 ```bash
-python scripts/reset_uploads.py      # clears data/uploads/ — do this before every measurement
+python scripts/reset_uploads.py      # czyści data/uploads/ — rób to przed każdym pomiarem
 uvicorn app.main:app --host 127.0.0.1 --port 8040
-# in a second terminal:
+# w drugim terminalu:
 python loadgen.py --duration 30 --concurrency 5 --scenario mixed
 ```
 
-You choose the profiler mode (CPU or wall-clock) **at process startup**:
-`PYROSCOPE_WALL=1 uvicorn app.main:app --host 127.0.0.1 --port 8040` (exercise
-11). There is no way to change the mode in a running application — changing it
-means a restart.
-`curl -s 127.0.0.1:8040/health` returns, among other things, the `pid` (handy
-for py-spy and memray) and the profiling state (`"mode": "cpu"|"wall"`). In the
-uvicorn terminal you will also see the line `Profiling active (Pyroscope: …, mode: …)`.
+Tryb profilera (CPU albo wall-clock) wybierasz **przy starcie procesu**:
+`PYROSCOPE_WALL=1 uvicorn app.main:app --host 127.0.0.1 --port 8040` (ćwiczenie
+11). Zmiany trybu w działającej aplikacji nie ma — zmiana = restart.
+`curl -s 127.0.0.1:8040/health` zwraca m.in. `pid` (przyda się py-spy i memray)
+oraz stan profilowania (`"tryb": "cpu"|"wall"`). W terminalu uvicorna zobaczysz
+też linię `Profiling aktywne (Pyroscope: …, tryb: …)`.
 
-`GET /debug/objects` (independent of `profiling.py`) returns counters of live objects: `live_pipelines`, `event_subscribers`, `publish_us` — for exercise 9.
+`GET /debug/objects` (bez zależności od `profiling.py`) zwraca liczniki żywych obiektów: `live_pipelines`, `event_subscribers`, `publish_us` — do ćwiczenia 9.
 
-As long as `app/profiling.py` still has a `TODO`, the `/debug/memory` endpoint
-returns HTTP 501 with a hint about which exercise unlocks it — the rest of the
-application (upload/thumbnails/filters/fetch/reports) works independently of
-the profiling state.
-You check the "done" criteria with a script: `python check.py exNN` (or
+Dopóki `app/profiling.py` ma `TODO`, endpoint `/debug/memory` zwraca HTTP 501 z
+podpowiedzią, w którym ćwiczeniu go odblokować — reszta aplikacji (upload/
+miniatury/filtry/fetch/raporty) działa niezależnie od stanu profilowania.
+Kryteria „done" sprawdzisz skryptem: `python check.py exNN` (albo
 `python check.py --all`).
 
-**Remember two things.** (1) After every code or mode change, restart the
-application; `check.py` asks Pyroscope only for samples **since the start of
-the current process**, so after a restart generate traffic and wait about 15–20
-s for the samples to appear. (2) Data from previous runs stays in the Pyroscope
-volume (`docker compose down -v` clears it); set the time windows in the UI to
-the last few minutes.
+**Pamiętaj o dwóch rzeczach.** (1) Po każdej zmianie kodu albo trybu zrestartuj
+aplikację; `check.py` pyta Pyroscope tylko o próbki **od startu bieżącego
+procesu**, więc po restarcie wygeneruj ruch i poczekaj ok. 15–20 s, aż próbki się
+pojawią. (2) Dane z poprzednich uruchomień zostają w wolumenie Pyroscope
+(`docker compose down -v` czyści); okna czasu w UI ustawiaj na ostatnie minuty.
 
-Stuck? First the graduated hints in `solutions/hints/` (direction → API →
-pseudocode), and only then the ready-made versions in `solutions/` (see
+Utknąłeś? Najpierw stopniowane podpowiedzi w `solutions/hints/` (kierunek →
+API → pseudokod), dopiero potem gotowe wersje w `solutions/` (patrz
 `solutions/README.md`).
 
-## Repository map
+## Mapa repo
 
-| Path | What it is |
+| Ścieżka | Co to |
 |---------|-------|
-| `app/`       | the pixelforge application (`profiling.py` — the topic layer of the course; `images.py`/`fetch.py`/`reports.py`/`storage.py`/`main.py` — the domain, works from the start) |
-| `data/`      | image corpus (`scripts/gen_corpus.py`) + runtime storage (`data/uploads/`, outside git) |
-| `exercises/` | 16 exercises + `00-theory.md` + block readings (`04a`/`06a`/`09a`/`11a`) + `glossary.md` |
-| `solutions/` | ready-made versions of modules, flaw-fix snippets, hints, answers |
-| `scripts/`   | `gen_corpus.py` (corpus), `reset_uploads.py` (clearing uploads) |
-| `check.py`   | machine verification of the "done" criteria per exercise |
-| `loadgen.py` | load generator (`--concurrency`/`--duration`/`--scenario`/`--pool`/`--report-ids`/`--requests`; the `pipeline` scenario = the same request over and over) |
-| `profiles/`  | a place for exercise artifacts (outside git) |
-| `docker-compose.yml` | Pyroscope + the `origin` service (nginx; static images to download) |
+| `app/`       | aplikacja pixelforge (`profiling.py` — warstwa-temat kursu; `images.py`/`fetch.py`/`reports.py`/`storage.py`/`main.py` — domena, działa od startu) |
+| `data/`      | korpus obrazów (`scripts/gen_corpus.py`) + runtime storage (`data/uploads/`, poza gitem) |
+| `exercises/` | 16 ćwiczeń + `00-teoria.md` + czytanki blokowe (`04a`/`06a`/`09a`/`11a`) + `slownik.md` |
+| `solutions/` | gotowe wersje modułów, fragmenty napraw, podpowiedzi, odpowiedzi |
+| `scripts/`   | `gen_corpus.py` (korpus), `reset_uploads.py` (czyszczenie uploadów) |
+| `check.py`   | maszynowa weryfikacja kryteriów „done" per ćwiczenie |
+| `loadgen.py` | generator ruchu (`--concurrency`/`--duration`/`--scenario`/`--pool`/`--report-ids`/`--requests`; scenariusz `pipeline` = to samo żądanie w kółko) |
+| `profiles/`  | miejsce na artefakty ćwiczeń (poza gitem) |
+| `docker-compose.yml` | Pyroscope + serwis `origin` (nginx; statyczne obrazy do pobierania) |
 
-## Tools used in the course
+## Narzędzia użyte w kursie
 
-- **Grafana Pyroscope** (Docker, `:4040`) — continuous profiling, flame graphs,
-  tagging, comparing profiles over time.
-- **py-spy** — inspecting a live Python process from the outside (top/dump/record),
-  without changing the code or restarting.
-- **memray** — an allocator-level memory profiler, leak detection
+- **Grafana Pyroscope** (Docker, `:4040`) — continuous profiling, flamegrafy,
+  tagowanie, porównywanie profili w czasie.
+- **py-spy** — podgląd żywego procesu Pythona z zewnątrz (top/dump/record),
+  bez zmiany kodu ani restartu.
+- **memray** — profiler pamięci na poziomie alokatora, wykrywanie wycieków
   (`--leaks`).
-- **cProfile + snakeviz** — a deterministic offline profile of a single
-  function, visualized in the browser.
-- **`tracemalloc`** (stdlib) — tracking Python allocations per line of code
-  (off by default: it slows pure-Python loops down by about 11×; you enable it
-  with `PIXELFORGE_TRACEMALLOC=1` or with the first `GET /debug/memory`).
-- **`timeit`** (stdlib) — comparative microbenchmarks.
+- **cProfile + snakeviz** — deterministyczny profil offline pojedynczej
+  funkcji, wizualizacja w przeglądarce.
+- **`tracemalloc`** (stdlib) — śledzenie alokacji Pythona per linia kodu
+  (domyślnie wyłączone: spowalnia pętle w czystym Pythonie ok. 11×; włączasz
+  `PIXELFORGE_TRACEMALLOC=1` albo pierwszym `GET /debug/memory`).
+- **`timeit`** (stdlib) — mikrobenchmarki porównawcze.
 
-## Notes
+## Uwagi
 
-- **Cost:** the course uses no LLM or paid service — $0.
-- **Ports:** the application `127.0.0.1:8040` (locally), Pyroscope `127.0.0.1:4040`
-  and `origin` `127.0.0.1:8041` (Docker; ports exposed on the loopback
-  interface only). If they collide with another program, change them in
-  `docker-compose.yml` and `.env` — do not run two heavy observability stacks
-  at the same time. Container names depend on the compose project
-  (`<project>-pyroscope-1`, `<project>-origin-1`); logs: `docker compose logs origin`.
-- **py-spy and memray without `sudo`.** On macOS `py-spy` always requires `sudo`
-  (macOS lets only root or a signed debugger read another process's memory;
-  SIP is a separate block on protected system binaries that even root cannot
-  bypass), and so does `memray attach`. Paths that need no administrator
-  privileges:
-  - **memray:** `memray run -o profiles/file.bin -m uvicorn app.main:app --host
-    127.0.0.1 --port 8040` starts the application directly under memray's
-    control (it requires no privileges); after stopping it (Ctrl+C) run
-    `memray flamegraph --leaks -o profiles/file.html profiles/file.bin`
-    (exercise 8).
-  - **py-spy:** in a Linux container
-    `docker run --rm -it --cap-add SYS_PTRACE python:3.14-slim …` (the `slim`
-    image has neither `pgrep`, `ps` nor `curl` — take the PID from `$!`, for
-    pixelforge from `/health`). With the default
-    PID isolation the container does not see the host's processes, so py-spy
-    can diagnose there only a program started in that same container. Without
-    `sudo` you therefore do exercise 2 entirely in one container (application,
-    loadgen, py-spy and `check.py ex02`; how to prepare it — repository,
-    corpus, `docker exec` — is in exercise 2, "Theory in a nutshell");
-    `solutions/gil_demo.py` (exercise 10) is only for practising the commands.
-  On Linux outside a container, attaching by PID usually needs root; without
-  it, only if the system's ptrace policy and your permissions allow it (e.g.
-  `CAP_SYS_PTRACE` or `kernel.yama.ptrace_scope` = 0).
-- **memray does NOT work on Windows** (it relies on mechanisms specific to
-  Linux/macOS) — on Windows use WSL2.
-- **`fsync` on macOS** does not flush the disk's hardware cache (`F_FULLFSYNC`
-  does that) — the flaw from exercise 14 is less visible there than on Linux.
-- **Do not commit profiling artifacts permanently** — the `profiles/` directory
-  (generated `.prof`/`.html`/`.bin`/`.txt`/`.md` files from the exercises) is in
-  `.gitignore`, as is `data/uploads/`.
+- **Koszt:** kurs nie używa żadnego LLM ani usługi płatnej — $0.
+- **Porty:** aplikacja `127.0.0.1:8040` (lokalnie), Pyroscope `127.0.0.1:4040`
+  i `origin` `127.0.0.1:8041` (Docker; porty wystawione tylko na pętlę zwrotną).
+  Jeśli kolidują z innym programem, zmień w `docker-compose.yml` i `.env` — nie
+  uruchamiaj dwóch ciężkich stacków obserwowalności naraz. Nazwy kontenerów
+  zależą od projektu compose (`<projekt>-pyroscope-1`, `<projekt>-origin-1`);
+  logi: `docker compose logs origin`.
+- **py-spy i memray bez `sudo`.** Na macOS `py-spy` zawsze wymaga `sudo` (macOS
+  pozwala czytać pamięć innego procesu tylko rootowi lub podpisanemu
+  debuggerowi; SIP to osobna blokada chronionych binarek systemowych, której
+  nie obchodzi nawet root), podobnie `memray attach`. Ścieżki bez
+  uprawnień administratora:
+  - **memray:** `memray run -o profiles/plik.bin -m uvicorn app.main:app --host
+    127.0.0.1 --port 8040` uruchamia aplikację od razu pod kontrolą memray (nie
+    wymaga uprawnień); po zatrzymaniu (Ctrl+C) `memray flamegraph --leaks -o
+    profiles/plik.html profiles/plik.bin` (ćwiczenie 8).
+  - **py-spy:** w kontenerze Linux
+    `docker run --rm -it --cap-add SYS_PTRACE python:3.14-slim …` (w obrazie
+    `slim` nie ma `pgrep`, `ps` ani `curl` — PID bierz z `$!`, dla pixelforge
+    z `/health`). Przy domyślnej
+    izolacji PID kontener nie widzi procesów hosta, więc py-spy zdiagnozuje w
+    nim tylko program uruchomiony w tym samym kontenerze. Ćwiczenie 2 bez
+    `sudo` wykonujesz więc w całości w jednym kontenerze (aplikacja, loadgen,
+    py-spy i `check.py ex02`; jak go przygotować — repozytorium, korpus,
+    `docker exec` — opisuje ćwiczenie 2, „Teoria w pigułce”);
+    `solutions/gil_demo.py` (ćwiczenie 10) służy tylko do przećwiczenia
+    poleceń.
+  Na Linuksie bez kontenera podłączenie po PID zwykle wymaga roota; bez niego
+  tylko wtedy, gdy pozwalają na to polityka ptrace systemu i Twoje uprawnienia
+  (np. `CAP_SYS_PTRACE` albo `kernel.yama.ptrace_scope` = 0).
+- **memray NIE działa na Windows** (opiera się na mechanizmach specyficznych
+  dla Linux/macOS) — na Windows użyj WSL2.
+- **`fsync` na macOS** nie opróżnia sprzętowego cache dysku (to robi
+  `F_FULLFSYNC`) — wada z ćwiczenia 14 jest tam słabiej widoczna niż na Linuksie.
+- **Nie commituj artefaktów profilowania na stałe** — katalog `profiles/`
+  (wygenerowane pliki `.prof`/`.html`/`.bin`/`.txt`/`.md` z ćwiczeń) jest w
+  `.gitignore`, podobnie `data/uploads/`.

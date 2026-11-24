@@ -1,23 +1,23 @@
-"""app/profiling.py — the topic layer of the pyprof course: profiling instrumentation.
+"""app/profiling.py — warstwa-temat kursu pyprof: instrumentacja profilowania.
 
-This is the ONLY module of the course with a TODO skeleton. All the other modules (images,
-fetch, reports, storage, main) are complete and work from the start — the learner does NOT
-write domain logic, only fills in the functions below in successive exercises.
-The rest of the application imports this module and catches `NotImplementedError` to
-return a readable HTTP 501 instead of crashing the whole service.
+To JEDYNY moduł kursu ze szkieletem TODO. Wszystkie inne moduły (images,
+fetch, reports, storage, main) są kompletne i działają od startu — uczeń NIE
+pisze logiki domenowej, tylko wypełnia funkcje poniżej w kolejnych ćwiczeniach.
+Reszta aplikacji importuje ten moduł i łapie `NotImplementedError`, żeby
+zwrócić czytelne HTTP 501 zamiast crashować cały serwis.
 
-Cumulative, WORKING versions of this file:
+Kumulatywne, DZIAŁAJĄCE wersje tego pliku:
   solutions/ex01_profiling.py    — init_profiling
   solutions/ex04_profiling.py    — + tag_wrapper
   solutions/ex07_profiling.py    — + start_memory_tracking / get_memory_snapshot
-  solutions/ex11_profiling.py    — + wall mode in init_profiling (= the final version)
-  solutions/exFINAL_profiling.py — a copy of ex11, to copy over app/profiling.py
-                                   when everything should work at once (e.g. ex. 16).
+  solutions/ex11_profiling.py    — + tryb wall w init_profiling (= wersja finalna)
+  solutions/exFINAL_profiling.py — kopia ex11, do skopiowania na app/profiling.py
+                                   gdy wszystko ma działać naraz (np. ćw. 16).
 
-The sampling mode (CPU or wall-clock) is chosen ONCE, at process start
-(the PYROSCOPE_WALL=1 environment variable -> the `wall` parameter). On
-pyroscope-io 1.4.0, calling pyroscope.configure() again while the agent is
-running is refused and changes neither the mode nor the tags.
+Tryb próbkowania (CPU albo wall-clock) wybiera się RAZ, przy starcie procesu
+(zmienna środowiskowa PYROSCOPE_WALL=1 → parametr `wall`). W pyroscope-io
+1.4.0 ponowne pyroscope.configure(), gdy agent działa, jest odrzucane i nie
+zmienia ani trybu, ani tagów.
 """
 
 from __future__ import annotations
@@ -36,21 +36,21 @@ _STATE: dict[str, Any] = {
 
 
 def is_configured() -> bool:
-    """True if init_profiling() has already been called. Ready from the start."""
+    """True, jeśli init_profiling() zostało już wywołane. Gotowe od startu."""
     return bool(_STATE["configured"])
 
 
 def is_wall() -> bool:
-    """True if the process started in wall-clock mode (PYROSCOPE_WALL=1)."""
+    """True, jeśli proces wystartował w trybie wall-clock (PYROSCOPE_WALL=1)."""
     return bool(_STATE["wall"])
 
 
 def status() -> dict[str, Any]:
-    """The profiling state for GET /health. Ready from the start."""
+    """Stan profilowania dla GET /health. Gotowe od startu."""
     return {
         "configured": is_configured(),
         "wall": is_wall(),
-        "mode": "wall" if is_wall() else "cpu",
+        "tryb": "wall" if is_wall() else "cpu",
         "tracemalloc": tracemalloc.is_tracing(),
     }
 
@@ -61,74 +61,74 @@ def init_profiling(
     tags: dict[str, str] | None = None,
     wall: bool = False,
 ) -> None:
-    """TODO exercise 01: connect the application to Pyroscope.
+    """TODO ćwiczenie 01: podłącz aplikację do Pyroscope.
 
-    Call `pyroscope.configure(...)` (pyroscope-io 1.4.0) with the parameters:
+    Wywołaj `pyroscope.configure(...)` (pyroscope-io 1.4.0) z parametrami:
       - application_name=app_name
       - server_address=server_address
-      - sample_rate=100     (default)
-      - oncpu=True          (a CPU profile, not wall-clock)
-      - gil_only=True       (only threads holding the GIL)
+      - sample_rate=100     (domyślnie)
+      - oncpu=True          (profil CPU, nie wall-clock)
+      - gil_only=True       (tylko wątki trzymające GIL)
       - tags=tags or {}
-    After configuring, save the parameters in _STATE and set _STATE["configured"] = True.
-    Leave the `wall` parameter unused for now — you will handle it in exercise 11.
+    Po konfiguracji zapisz parametry w _STATE i ustaw _STATE["configured"] = True.
+    Parametr `wall` zostaw na razie nieużyty — obsłużysz go w ćwiczeniu 11.
 
-    See solutions/ex01_profiling.py.
+    Zobacz solutions/ex01_profiling.py.
     """
     raise NotImplementedError(
-        "TODO exercise 01: implement init_profiling() — see "
-        "solutions/ex01_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 01: zaimplementuj init_profiling() — zobacz "
+        "solutions/ex01_profiling.py i app/profiling.py"
     )
 
 
 @contextmanager
 def tag_wrapper(tags: dict[str, str]) -> Iterator[None]:
-    """TODO exercise 04: tag a piece of code in Pyroscope per endpoint.
+    """TODO ćwiczenie 04: otaguj fragment kodu w Pyroscope per-endpoint.
 
-    `pyroscope.tag_wrapper(tags: dict)` is a context manager that, for the duration
-    of the `with` block, adds tags to the samples collected IN THIS THREAD.
-    Target usage (see app/main.py, the `_instrumented` helper):
+    `pyroscope.tag_wrapper(tags: dict)` to context manager, który na czas
+    bloku `with` dokłada tagi do próbek zebranych w TYM WĄTKU.
+    Docelowe użycie (patrz app/main.py, helper `_instrumented`):
         with tag_wrapper({"endpoint": "thumbnail"}):
-            ... endpoint code ...
+            ... kod endpointu ...
 
-    See solutions/ex04_profiling.py.
+    Zobacz solutions/ex04_profiling.py.
     """
     raise NotImplementedError(
-        "TODO exercise 04: implement tag_wrapper() — see "
-        "solutions/ex04_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 04: zaimplementuj tag_wrapper() — zobacz "
+        "solutions/ex04_profiling.py i app/profiling.py"
     )
-    yield  # unreachable — keeps the generator shape required by @contextmanager
+    yield  # nieosiągalne — zachowuje kształt generatora dla @contextmanager
 
 
 def start_memory_tracking() -> None:
-    """TODO exercise 07: start allocation tracking (tracemalloc).
+    """TODO ćwiczenie 07: uruchom śledzenie alokacji (tracemalloc).
 
-    Call `tracemalloc.start()` — but only if it is not running yet
-    (`tracemalloc.is_tracing()`), so that a repeated call does not reset the
-    collected history. main.py calls this function at application start when PIXELFORGE_TRACEMALLOC=1.
+    Wywołaj `tracemalloc.start()` — ale tylko jeśli jeszcze nie działa
+    (`tracemalloc.is_tracing()`), żeby powtórne wywołanie nie resetowało
+    zebranej historii. main.py woła tę funkcję przy starcie aplikacji, gdy PIXELFORGE_TRACEMALLOC=1.
 
-    See solutions/ex07_profiling.py.
+    Zobacz solutions/ex07_profiling.py.
     """
     raise NotImplementedError(
-        "TODO exercise 07: implement start_memory_tracking() — see "
-        "solutions/ex07_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 07: zaimplementuj start_memory_tracking() — zobacz "
+        "solutions/ex07_profiling.py i app/profiling.py"
     )
 
 
 def get_memory_snapshot(top_n: int = 10) -> list[dict[str, Any]]:
-    """TODO exercise 07: take a tracemalloc snapshot and return the top_n allocations.
+    """TODO ćwiczenie 07: zrób snapshot tracemalloc i zwróć top_n alokacji.
 
-    `tracemalloc.take_snapshot().statistics("lineno")` returns a list sorted
-    by size, descending. Map the first `top_n` to the GET /debug/memory format:
+    `tracemalloc.take_snapshot().statistics("lineno")` zwraca listę posortowaną
+    malejąco po rozmiarze. Zmapuj pierwsze `top_n` na format GET /debug/memory:
 
         [{"file": "...", "line": 42, "size_kb": 123.4, "count": 10}, ...]
 
-    If tracemalloc is not running yet, start it (start_memory_tracking())
-    and return an empty list — the data will appear on the next call, after traffic.
+    Jeśli tracemalloc jeszcze nie działa, uruchom je (start_memory_tracking())
+    i zwróć pustą listę — dane pojawią się przy kolejnym wywołaniu, po ruchu.
 
-    See solutions/ex07_profiling.py.
+    Zobacz solutions/ex07_profiling.py.
     """
     raise NotImplementedError(
-        "TODO exercise 07: implement get_memory_snapshot() — see "
-        "solutions/ex07_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 07: zaimplementuj get_memory_snapshot() — zobacz "
+        "solutions/ex07_profiling.py i app/profiling.py"
     )

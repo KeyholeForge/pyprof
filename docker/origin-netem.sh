@@ -1,9 +1,9 @@
 #!/bin/sh
-# Adds a constant delay of ORIGIN_DELAY_MS (ms) to packets leaving the container.
-# ORIGIN_DELAY_MS=0 turns the delay off.
+# Dodaje stałe opóźnienie ORIGIN_DELAY_MS (ms) do pakietów wychodzących z kontenera.
+# ORIGIN_DELAY_MS=0 wyłącza opóźnienie.
 DELAY="${ORIGIN_DELAY_MS:-0}"
 if [ "$DELAY" != "0" ]; then
   tc qdisc replace dev eth0 root netem delay "${DELAY}ms" \
-    && echo "origin: network delay ${DELAY} ms (tc netem)" \
-    || echo "origin: NOTE, failed to set tc netem (missing NET_ADMIN?) — no delay"
+    && echo "origin: opóźnienie sieciowe ${DELAY} ms (tc netem)" \
+    || echo "origin: UWAGA, nie udało się ustawić tc netem (brak NET_ADMIN?) — bez opóźnienia"
 fi

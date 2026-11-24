@@ -1,10 +1,10 @@
-"""Configuration of the pixelforge application.
+"""Konfiguracja aplikacji pixelforge.
 
-The pyprof course does not use an LLM, so there are no secrets worth loading
-through python-dotenv (deliberately left out of requirements.txt) - reading
-environment variables with sensible defaults, identical to the ones in
-`.env.example`, is enough. If you want to override any of them locally, export
-it before starting uvicorn, for example:
+Kurs pyprof nie używa LLM, więc nie ma sekretów wartych ładowania przez
+python-dotenv (celowo pominięty w requirements.txt) — wystarczy odczyt
+zmiennych środowiskowych z sensownymi domyślnymi wartościami, identycznymi
+jak w `.env.example`. Jeśli chcesz nadpisać którąś z nich lokalnie, wyeksportuj
+ją przed uruchomieniem uvicorna, np.:
 
     export PIXELFORGE_PORT=8040
     uvicorn app.main:app --port "$PIXELFORGE_PORT"
@@ -26,14 +26,13 @@ PYROSCOPE_APPLICATION_NAME = os.environ.get(
     "PYROSCOPE_APPLICATION_NAME", "pixelforge"
 )
 
-# Profiler sampling mode, chosen ONCE at process start:
-# PYROSCOPE_WALL=1 -> wall-clock (oncpu=False, gil_only=False), otherwise CPU.
+# Tryb próbkowania profilera, wybierany RAZ przy starcie procesu:
+# PYROSCOPE_WALL=1 → wall-clock (oncpu=False, gil_only=False), inaczej CPU.
 PYROSCOPE_WALL = os.environ.get("PYROSCOPE_WALL", "0") == "1"
 
-# tracemalloc slows the application down (measured: the sepia filter is ~11x
-# slower, because every allocation is tracked), so it is OFF by default.
-# PIXELFORGE_TRACEMALLOC=1 turns it on from process start; otherwise it starts
-# on the first GET /debug/memory.
+# tracemalloc spowalnia aplikację (pomiar: filtr sepia ~11x wolniejszy, bo każda
+# alokacja jest śledzona), więc domyślnie jest WYŁĄCZONE. PIXELFORGE_TRACEMALLOC=1
+# włącza je od startu procesu; inaczej startuje przy pierwszym GET /debug/memory.
 TRACEMALLOC = os.environ.get("PIXELFORGE_TRACEMALLOC", "0") == "1"
 
 ORIGIN_BASE_URL = os.environ.get("ORIGIN_BASE_URL", "http://127.0.0.1:8041")
@@ -41,9 +40,8 @@ ORIGIN_BASE_URL = os.environ.get("ORIGIN_BASE_URL", "http://127.0.0.1:8041")
 CORPUS_DIR = REPO_ROOT / os.environ.get("CORPUS_DIR", "data/corpus")
 ORIGIN_IMAGES_DIR = REPO_ROOT / os.environ.get("ORIGIN_IMAGES_DIR", "data/origin_images")
 
-# The application's runtime storage (upload/fetch/filters) - NOT the course's
-# data corpus. Created at startup if it does not exist. It is not part of
-# .env.example, because it is an implementation detail, not a course
-# configuration parameter.
+# Storage runtime aplikacji (upload/fetch/filtry) — NIE korpus danych kursu.
+# Tworzony przy starcie, jeśli nie istnieje. Nie jest częścią .env.example,
+# bo to szczegół implementacyjny, nie parametr konfiguracyjny kursu.
 UPLOAD_DIR = REPO_ROOT / "data" / "uploads"
 FILTERED_DIR = UPLOAD_DIR / "filtered"

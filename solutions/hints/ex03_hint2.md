@@ -1,7 +1,7 @@
-# ex03 — hint 2: Which API/tool
+# ex03 — hint 2: Które API/narzędzie
 
-`cProfile.Profile()` + `.enable()`/`.disable()` around the function call,
-`profiler.dump_stats(path)` saves the `.prof` file. `snakeviz <file.prof>`
-starts a local server and tries to open a browser with an interactive chart
-(`snakeviz -s <file.prof>` starts the server and prints the address without
-opening a browser).
+`cProfile.Profile()` + `.enable()`/`.disable()` wokół wywołania funkcji,
+`profiler.dump_stats(path)` zapisuje `.prof`. `snakeviz <plik.prof>`
+uruchamia lokalny serwer i próbuje otworzyć przeglądarkę z interaktywnym
+wykresem (`snakeviz -s <plik.prof>` uruchamia serwer i wypisuje adres bez
+otwierania przeglądarki).

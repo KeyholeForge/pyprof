@@ -1,5 +1,5 @@
-# ex04 — hint 1: Direction
+# ex04 — hint 1: Kierunek
 
-`tag_wrapper` in `app/profiling.py` should be a THIN wrapper around the
-function of the same name from the `pyroscope` library — you do not need to
-write your own tagging logic.
+`tag_wrapper` w `app/profiling.py` powinno być CIENKĄ nakładką na
+funkcję z biblioteki `pyroscope` o tej samej nazwie — nie musisz pisać
+własnej logiki tagowania.

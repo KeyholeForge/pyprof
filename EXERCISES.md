@@ -1,72 +1,72 @@
-# Index of exercises and readings
+# Spis ćwiczeń i czytanek
 
-The order is progressive — each exercise builds on the previous one. The
-theoretical readings (no tasks) precede the blocks they concern. Start with
-`exercises/00-theory.md` — the concept map of the whole course.
+Kolejność jest progresywna — każde ćwiczenie buduje na poprzednim. Czytanki
+teoretyczne (bez zadań) poprzedzają bloki, których dotyczą. Zacznij od
+`exercises/00-teoria.md` — mapa pojęć całego kursu.
 
-The times in the table are the approximate working time **without** waiting for
-Pyroscope to start (about 90 s on the first `docker compose up`) and for samples
-to appear after traffic (about 15–20 s). The whole course: about 10–11 hours.
+Czasy w tabeli to orientacyjny czas pracy **bez** czekania na start Pyroscope
+(ok. 90 s przy pierwszym `docker compose up`) i na pojawienie się próbek po
+ruchu (ok. 15–20 s). Cały kurs: ok. 10–11 godzin.
 
-## Skills map
+## Mapa umiejętności
 
-After finishing the course you can:
-- run continuous profiling and read a flame graph, filter by tags (ex. 1, 4)
-- inspect a live process without a restart (py-spy top/dump) (ex. 2)
-- profile a single function offline and compare implementations with a microbenchmark (ex. 3, 6)
-- diagnose and fix a CPU-bound flaw (a Python loop → a native operation) (ex. 5)
-- find a growing cache through RSS, tracemalloc and memray, fix it with eviction (ex. 7-8)
-- tell a true leak from a cache with the "same request × N" test, **find who holds the reference** (`gc.get_referrers`) and fix a registry leak in two ways: a shared graph vs unsubscribing (ex. 9); check by measurement whether a micro-optimization matters (★ Bonus B in ex. 9)
-- explain and demonstrate the GIL — why threads do not speed up CPU-bound code; **decide "are we computing or waiting"** from wall-clock time and CPU time (ex. 10)
-- choose the profiler mode (cpu / wall) at startup and diagnose a frozen event loop; recognize three kinds of loop blocking (`sleep`, CPU, `fsync`) and the **limits of a sampling profiler** — a suspended coroutine is invisible, tags in `async def` get mixed up (ex. 11, reading 11a)
-- diagnose network flaws (a new client per request, sequential fan-out) through the **connection count, the time and the `trace` hook**, not through a wide frame in the profile (ex. 12-13)
-- diagnose a disk flaw (excess fsync): visible in wall, almost invisible in cpu; know how macOS differs from Linux (ex. 14)
-- compare the profiles of two versions of the application by the `version` tag and detect a performance regression (ex. 15)
-- diagnose an incident with several flaws at once ONLY through tools, choosing the tool for the kind of waiting and separating overlapping symptoms (ex. 16)
+Po ukończeniu kursu umiesz:
+- uruchomić continuous profiling i czytać flamegraf, filtrować po tagach (ćw. 1, 4)
+- podejrzeć żywy proces bez restartu (py-spy top/dump) (ćw. 2)
+- sprofilować pojedynczą funkcję offline i porównać implementacje mikrobenchmarkiem (ćw. 3, 6)
+- zdiagnozować i naprawić CPU-bound wadę (pętla Pythona → operacja natywna) (ćw. 5)
+- znaleźć rosnący cache przez RSS, tracemalloc i memray, naprawić przez evikcję (ćw. 7-8)
+- odróżnić prawdziwy wyciek od cache testem „to samo żądanie × N”, **znaleźć, kto trzyma referencję** (`gc.get_referrers`) i naprawić wyciek rejestru dwiema drogami: graf współdzielony vs wyrejestrowanie (ćw. 9); sprawdzić pomiarem, czy mikrooptymalizacja ma znaczenie (★ Bonus B w ćw. 9)
+- wytłumaczyć i zademonstrować GIL — dlaczego wątki nie przyspieszają CPU-bound; **zdecydować „liczymy czy czekamy"** na podstawie czasu zegarowego i CPU (ćw. 10)
+- wybrać tryb profilera (cpu / wall) przy starcie i zdiagnozować zamrożony event loop; rozpoznać trzy rodzaje blokady pętli (`sleep`, CPU, `fsync`) i **granice profilera próbkującego** — zawieszonej korutyny nie widać, tagi w `async def` się mieszają (ćw. 11, czytanka 11a)
+- zdiagnozować wady sieciowe (nowy klient per żądanie, sekwencyjny fan-out) przez **liczbę połączeń, czas i hak `trace`**, a nie przez szeroką ramkę w profilu (ćw. 12-13)
+- zdiagnozować wadę dyskową (nadmiarowy fsync): widoczną w wall, prawie niewidoczną w cpu; wiedzieć, czym macOS różni się od Linuksa (ćw. 14)
+- porównać profile dwóch wersji aplikacji po tagu `version` i wykryć regresję wydajności (ćw. 15)
+- zdiagnozować incydent z wieloma wadami naraz WYŁĄCZNIE przez narzędzia, dobierając narzędzie do rodzaju czekania i rozdzielając nakładające się objawy (ćw. 16)
 
-<!-- This map WAS WRITTEN BEFORE the list of exercises and determined their number
-     (METODYKA §5). Every exercise builds at least one skill from the map. Full
-     description: solutions/todo.md -->
+<!-- Ta mapa POWSTAŁA PRZED listą ćwiczeń i wyznaczyła ich liczbę (METODYKA §5).
+     Każde ćwiczenie buduje co najmniej jedną umiejętność z mapy. Pełny opis:
+     solutions/todo.md -->
 
-## Exercises
+## Ćwiczenia
 
-| #   | File                                  | Time    | What you do |
+| #   | Plik                                  | Czas    | Co robisz |
 |-----|----------------------------------------|---------|-----------|
-| —   | `exercises/00-theory.md`              | ~30 min | **Reading:** the concept map of profiling (read it first) |
-| 1   | `exercises/01.md`                     | ~30 min | Stack setup + `init_profiling` + the first flame graph in Pyroscope |
-| 2   | `exercises/02.md`                     | ~20 min | py-spy top/dump on a live process, without a restart |
-| 3   | `exercises/03.md`                     | ~25 min | cProfile + snakeviz — an offline profile of one function |
-| 4   | `exercises/04.md`                     | ~35 min | per-endpoint `tag_wrapper` + reading flame graphs + mini-incident (end of block A) |
-| —   | `exercises/04a-cpu-internals.md`      | ~15 min | **Reading:** the cost of operations in Python, interpreter overhead (before block B) |
-| 5   | `exercises/05.md`                     | ~30 min | Diagnosing and fixing a naive CPU filter (F2) |
-| 6   | `exercises/06.md`                     | ~25 min | Microbenchmarks (`timeit`) + CPU mini-incident (end of block B) |
-| —   | `exercises/06a-cpython-memory.md`     | ~15 min | **Reading:** CPython memory internals; cache / leak / backlog (before block C) |
-| 7   | `exercises/07.md`                     | ~25 min | `tracemalloc` via `/debug/memory` (×11 overhead) |
-| 8   | `exercises/08.md`                     | ~40 min | RSS, tracemalloc and memray — diagnosing and fixing an unbounded thumbnail cache (F1) |
-| 9   | `exercises/09.md`                     | ~60 min | A true memory leak (F1b): a graph per request in a global event bus — the "same request × N" test, tracemalloc/memray, `gc.get_referrers`, two fixes + a cache-or-leak mini-incident (end of block C); ★ F7 |
-| —   | `exercises/09a-concurrency-gil-asyncio.md` | ~15 min | **Reading:** the GIL, threads, asyncio; "are we computing or waiting?" (before block D) |
-| 10  | `exercises/10.md`                     | ~30 min | The GIL — why threads do not speed up CPU-bound code (`gil_demo.py`) |
-| 11  | `exercises/11.md`                     | ~45 min | Wall mode at startup, a frozen loop (F6): `sleep`, CPU, `fsync`; the limits of the profiler + mini-incident (end of block D) |
-| —   | `exercises/11a-io-network-disk.md`    | ~20 min | **Reading:** network and disk I/O + the limits of a sampling profiler (before block E) |
-| 12  | `exercises/12.md`                     | ~30 min | TCP — a new httpx client per request (F3a): connection count → a shared client |
-| 13  | `exercises/13.md`                     | ~30 min | Fan-out (F3b): time and the `trace` hook → `asyncio.gather`; when parallelism does not help |
-| 14  | `exercises/14.md`                     | ~35 min | Disk — fsync after every chunk (F4), loop blocking, `F_FULLFSYNC` + I/O mini-incident (end of block E) |
-| 15  | `exercises/15.md`                     | ~35 min | Comparing profiles by the `version` tag — a performance regression (F8) |
-| 16  | `exercises/16.md`                     | ~75 min | The final challenge — 4 flaws at once (two phases), diagnosis ONLY through tools |
+| —   | `exercises/00-teoria.md`              | ~30 min | **Czytanka:** mapa pojęć profilowania (przeczytaj pierwsze) |
+| 1   | `exercises/01.md`                     | ~30 min | Setup stacku + `init_profiling` + pierwszy flamegraf w Pyroscope |
+| 2   | `exercises/02.md`                     | ~20 min | py-spy top/dump na żywym procesie, bez restartu |
+| 3   | `exercises/03.md`                     | ~25 min | cProfile + snakeviz — profil offline jednej funkcji |
+| 4   | `exercises/04.md`                     | ~35 min | `tag_wrapper` per-endpoint + czytanie flamegrafów + mini-incydent (koniec bloku A) |
+| —   | `exercises/04a-cpu-od-srodka.md`      | ~15 min | **Czytanka:** koszt operacji w Pythonie, interpreter overhead (przed blokiem B) |
+| 5   | `exercises/05.md`                     | ~30 min | Diagnoza i naprawa naiwnego filtra CPU (W2) |
+| 6   | `exercises/06.md`                     | ~25 min | Mikrobenchmarki (`timeit`) + mini-incydent CPU (koniec bloku B) |
+| —   | `exercises/06a-pamiec-cpythona.md`    | ~15 min | **Czytanka:** pamięć CPythona od środka; cache / wyciek / zaległa praca (przed blokiem C) |
+| 7   | `exercises/07.md`                     | ~25 min | `tracemalloc` przez `/debug/memory` (narzut ×11) |
+| 8   | `exercises/08.md`                     | ~40 min | RSS, tracemalloc i memray — diagnoza i naprawa cache miniatur bez limitu (W1) |
+| 9   | `exercises/09.md`                     | ~60 min | Prawdziwy wyciek pamięci (W1b): graf per żądanie w globalnej szynie — test „to samo żądanie × N”, tracemalloc/memray, `gc.get_referrers`, dwie naprawy + mini-incydent cache czy wyciek (koniec bloku C); ★ W7 |
+| —   | `exercises/09a-wspolbieznosc-gil-asyncio.md` | ~15 min | **Czytanka:** GIL, wątki, asyncio; „liczymy czy czekamy?" (przed blokiem D) |
+| 10  | `exercises/10.md`                     | ~30 min | GIL — dlaczego wątki nie przyspieszają CPU-bound (`gil_demo.py`) |
+| 11  | `exercises/11.md`                     | ~45 min | Tryb wall przy starcie, zamrożona pętla (W6): `sleep`, CPU, `fsync`; granice profilera + mini-incydent (koniec bloku D) |
+| —   | `exercises/11a-io-sieci-dysku.md`     | ~20 min | **Czytanka:** I/O sieci i dysku + granice profilera próbkującego (przed blokiem E) |
+| 12  | `exercises/12.md`                     | ~30 min | TCP — nowy klient httpx per request (W3a): liczba połączeń → współdzielony klient |
+| 13  | `exercises/13.md`                     | ~30 min | Fan-out (W3b): czas i hak `trace` → `asyncio.gather`; kiedy równoległość nie pomaga |
+| 14  | `exercises/14.md`                     | ~35 min | Dysk — fsync po każdym kawałku (W4), blokada pętli, `F_FULLFSYNC` + mini-incydent I/O (koniec bloku E) |
+| 15  | `exercises/15.md`                     | ~35 min | Porównywanie profili po tagu `version` — regresja wydajności (W8) |
+| 16  | `exercises/16.md`                     | ~75 min | Finałowy challenge — 4 wady naraz (dwie fazy), diagnoza WYŁĄCZNIE przez narzędzia |
 
-Concepts in a nutshell: `exercises/glossary.md`. Solutions and hints: the `solutions/` directory.
-"Done" verification: `python check.py exNN` (or `python check.py --all`).
+Pojęcia w pigułce: `slownik.md`. Rozwiązania i podpowiedzi: katalog `solutions/`.
+Weryfikacja „done": `python check.py exNN` (albo `python check.py --all`).
 
-## Topic blocks
+## Bloki tematyczne
 
-- **A — Foundations** (ex. 1-4): setup, tools (Pyroscope/py-spy/cProfile),
-  tagging, reading flame graphs.
-- **B — CPU** (ex. 5-6): diagnosing and fixing a computational flaw, microbenchmarks.
-- **C — Memory** (ex. 7-9): tracemalloc, memray, an unbounded cache (F1), a true
-  leak and "who holds it" (F1b).
-- **D — Concurrency** (ex. 10-11): the GIL, threads vs processes, "are we computing or
-  waiting?", cpu/wall modes, the event loop and its blocking, the limits of the profiler.
-- **E — Network/disk** (ex. 12-14): the TCP connection count, fan-out, disk I/O — and
-  choosing the tool: a profile or a stopwatch.
-- **F — Final** (ex. 15-16): comparing profiles by the `version` tag, the final
-  challenge (diagnosis without reading the code, overlapping symptoms).
+- **A — Fundamenty** (ćw. 1-4): setup, narzędzia (Pyroscope/py-spy/cProfile),
+  tagowanie, czytanie flamegrafów.
+- **B — CPU** (ćw. 5-6): diagnoza i naprawa wady obliczeniowej, mikrobenchmarki.
+- **C — Pamięć** (ćw. 7-9): tracemalloc, memray, cache bez limitu (W1), prawdziwy
+  wyciek i „kto trzyma” (W1b).
+- **D — Współbieżność** (ćw. 10-11): GIL, wątki vs procesy, „liczymy czy
+  czekamy?", tryby cpu/wall, event loop i jego blokady, granice profilera.
+- **E — Sieć/dysk** (ćw. 12-14): liczba połączeń TCP, fan-out, I/O dysku — i
+  dobór narzędzia: profil czy stoper.
+- **F — Finał** (ćw. 15-16): porównywanie profili po tagu `version`, finałowy
+  challenge (diagnoza bez czytania kodu, nakładające się objawy).

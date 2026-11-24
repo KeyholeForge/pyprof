@@ -1,6 +1,6 @@
-# ex04 — hint 2: Which API/tool
+# ex04 — hint 2: Które API/narzędzie
 
-`pyroscope.tag_wrapper(tags: dict)` is a ready-made context manager from
-pyroscope-io — your function just calls it with `with` and `yield`.
+`pyroscope.tag_wrapper(tags: dict)` to gotowy context manager z
+pyroscope-io — Twoja funkcja tylko go woła przez `with` i `yield`.
 
-Note: tags are set per thread — this works for `def` endpoints (a synchronous handler runs on one pool worker thread while it executes); for `async def` the tags of concurrent requests get mixed (exercise 11).
+Uwaga: tagi są ustawiane na wątek — działa dla endpointów `def` (synchroniczny handler działa na jednym wątku roboczym z puli przez czas wykonania); dla `async def` tagi współbieżnych żądań się mieszają (ćwiczenie 11).

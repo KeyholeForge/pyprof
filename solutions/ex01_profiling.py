@@ -1,9 +1,9 @@
-"""solutions/ex01_profiling.py — the cumulative version of app/profiling.py after exercise 01.
+"""solutions/ex01_profiling.py — kumulatywna wersja app/profiling.py po ćwiczeniu 01.
 
-Implemented: init_profiling() (ex. 01). The `wall` parameter is accepted,
-but still ignored — you will handle it in exercise 11.
+Zaimplementowane: init_profiling() (ćw. 01). Parametr `wall` jest przyjęty,
+ale jeszcze ignorowany — obsłużysz go w ćwiczeniu 11.
 
-Usage: cp solutions/ex01_profiling.py app/profiling.py
+Użycie: cp solutions/ex01_profiling.py app/profiling.py
 """
 
 from __future__ import annotations
@@ -24,21 +24,21 @@ _STATE: dict[str, Any] = {
 
 
 def is_configured() -> bool:
-    """True if init_profiling() has already been called. Ready from the start."""
+    """True, jeśli init_profiling() zostało już wywołane. Gotowe od startu."""
     return bool(_STATE["configured"])
 
 
 def is_wall() -> bool:
-    """True if the process started in wall-clock mode (PYROSCOPE_WALL=1)."""
+    """True, jeśli proces wystartował w trybie wall-clock (PYROSCOPE_WALL=1)."""
     return bool(_STATE["wall"])
 
 
 def status() -> dict[str, Any]:
-    """The profiling state for GET /health. Ready from the start."""
+    """Stan profilowania dla GET /health. Gotowe od startu."""
     return {
         "configured": is_configured(),
         "wall": is_wall(),
-        "mode": "wall" if is_wall() else "cpu",
+        "tryb": "wall" if is_wall() else "cpu",
         "tracemalloc": tracemalloc.is_tracing(),
     }
 
@@ -68,25 +68,25 @@ def init_profiling(
 
 @contextmanager
 def tag_wrapper(tags: dict[str, str]) -> Iterator[None]:
-    """TODO exercise 04 — see solutions/ex04_profiling.py."""
+    """TODO ćwiczenie 04 — zobacz solutions/ex04_profiling.py."""
     raise NotImplementedError(
-        "TODO exercise 04: implement tag_wrapper() — see "
-        "solutions/ex04_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 04: zaimplementuj tag_wrapper() — zobacz "
+        "solutions/ex04_profiling.py i app/profiling.py"
     )
     yield
 
 
 def start_memory_tracking() -> None:
-    """TODO exercise 07 — see solutions/ex07_profiling.py."""
+    """TODO ćwiczenie 07 — zobacz solutions/ex07_profiling.py."""
     raise NotImplementedError(
-        "TODO exercise 07: implement start_memory_tracking() — see "
-        "solutions/ex07_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 07: zaimplementuj start_memory_tracking() — zobacz "
+        "solutions/ex07_profiling.py i app/profiling.py"
     )
 
 
 def get_memory_snapshot(top_n: int = 10) -> list[dict[str, Any]]:
-    """TODO exercise 07 — see solutions/ex07_profiling.py."""
+    """TODO ćwiczenie 07 — zobacz solutions/ex07_profiling.py."""
     raise NotImplementedError(
-        "TODO exercise 07: implement get_memory_snapshot() — see "
-        "solutions/ex07_profiling.py and app/profiling.py"
+        "TODO ćwiczenie 07: zaimplementuj get_memory_snapshot() — zobacz "
+        "solutions/ex07_profiling.py i app/profiling.py"
     )

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""scripts/reset_uploads.py — cleans data/uploads/ (images saved by upload/fetch/filters).
+"""scripts/reset_uploads.py — czyści data/uploads/ (obrazy wgrane przez upload/fetch/filtry).
 
-Run it before every measurement, so the results do not depend on the history of previous
-loadgen runs. Stop the application first or restart it after cleaning
-(the thumbnail cache in the process holds IDs that no longer exist on disk).
+Uruchom przed każdym pomiarem, żeby wyniki nie zależały od historii poprzednich
+biegów loadgenu. Zatrzymaj wcześniej aplikację albo zrestartuj ją po czyszczeniu
+(cache miniatur w procesie trzyma ID, których już nie ma na dysku).
 
     python scripts/reset_uploads.py
 """
@@ -23,7 +23,7 @@ def main() -> None:
         shutil.rmtree(UPLOAD_DIR)
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     (UPLOAD_DIR / "filtered").mkdir(exist_ok=True)
-    print(f"reset_uploads: removed {removed} files from {UPLOAD_DIR}")
+    print(f"reset_uploads: usunięto {removed} plików z {UPLOAD_DIR}")
 
 
 if __name__ == "__main__":

@@ -1,1 +1,1 @@
-"""The pixelforge application — an image processing service for the pyprof course."""
+"""Aplikacja pixelforge — serwis przetwarzania obrazów dla kursu pyprof."""

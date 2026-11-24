@@ -1,16 +1,16 @@
-"""The filter pipeline (a graph of nodes) and the event bus — pixelforge domain logic.
+"""Potok filtrów (graf węzłów) i szyna zdarzeń — logika domenowa pixelforge.
 
-This module WORKS from the start, but together with `app/images.py`
-(`apply_pipeline`) it contains flaw F1b (exercise 09) — a TRUE memory leak:
+Ten moduł DZIAŁA od startu, ale razem z `app/images.py` (`apply_pipeline`)
+zawiera wadę W1b (ćwiczenie 09) — PRAWDZIWY wyciek pamięci:
 
-  - `FilterPipeline` is a graph of filter nodes, each with its own intermediate buffer;
-  - the constructor registers the pipeline in the global `EVENTS` bus
-    (`EVENTS.subscribe(self.on_progress)`) — a bound method holds `self`;
-  - nothing ever calls `unsubscribe`.
+  - `FilterPipeline` to graf węzłów filtrów, każdy ze swoim buforem pośrednim;
+  - konstruktor rejestruje potok w globalnej szynie `EVENTS`
+    (`EVENTS.subscribe(self.on_progress)`) — metoda związana trzyma `self`;
+  - nic nigdy nie woła `unsubscribe`.
 
-If the pipeline is built on EVERY request (which is what `images.apply_pipeline`
-does), every request leaves a live graph behind, buffers included, and the bus
-delivers every event to an ever longer list of subscribers.
+Jeśli potok jest budowany przy KAŻDYM żądaniu (tak robi `images.apply_pipeline`),
+każde żądanie zostawia po sobie żywy graf razem z buforami, a szyna rozsyła
+każde zdarzenie do coraz dłuższej listy nasłuchujących.
 """
 
 from __future__ import annotations
@@ -21,12 +21,12 @@ from itertools import count
 
 from PIL import Image, ImageFilter, ImageOps
 
-# Side of the working image: the pipeline works on a thumbnail, not on the original.
+# Bok obrazu roboczego: potok pracuje na miniaturze, nie na oryginale.
 WORK_SIZE = 64
 
 
 class EventBus:
-    """A simple event bus: a list of subscribers called synchronously."""
+    """Prosta szyna zdarzeń: lista nasłuchujących wołanych synchronicznie."""
 
     def __init__(self) -> None:
         self._subscribers: list[Callable[[dict], None]] = []
@@ -48,12 +48,12 @@ class EventBus:
         return len(self._subscribers)
 
 
-# The process-wide bus — lives as long as the process does.
+# Globalna szyna procesu — żyje tak długo, jak proces.
 EVENTS = EventBus()
 
 
 class Metrics:
-    """Event counters — registered ONCE, so it is not a flaw."""
+    """Liczniki zdarzeń — rejestrowany JEDEN raz, więc nie jest wadą."""
 
     def __init__(self) -> None:
         self.steps = 0
@@ -95,18 +95,18 @@ NODE_FUNCS = {
 }
 
 PRESETS = {
-    "sketch": ("grayscale", "blur", "contrast"),
-    "poster": ("poster", "sharpen", "contrast"),
+    "szkic": ("grayscale", "blur", "contrast"),
+    "plakat": ("poster", "sharpen", "contrast"),
 }
 
 
 class UnknownPresetError(Exception):
-    """Unknown pipeline preset name."""
+    """Nieznana nazwa presetu potoku."""
 
 
 @dataclass
 class FilterNode:
-    """A graph node: a filter + its last intermediate result (a preview for debugging)."""
+    """Węzeł grafu: filtr + ostatni wynik pośredni (podgląd do debugowania)."""
 
     name: str
     func: Callable[[Image.Image], Image.Image]
@@ -117,8 +117,8 @@ _pipeline_ids = count(1)
 
 
 class FilterPipeline:
-    """A graph of filter nodes. Building it is expensive (nodes, buffers), and
-    the constructor registers the pipeline in the global event bus."""
+    """Graf węzłów filtrów. Zbudowanie go jest drogie (węzły, bufory), a
+    konstruktor rejestruje potok w globalnej szynie zdarzeń."""
 
     def __init__(self, preset: str) -> None:
         if preset not in PRESETS:
@@ -127,20 +127,20 @@ class FilterPipeline:
         self.pipeline_id = next(_pipeline_ids)
         self.nodes = [FilterNode(name, NODE_FUNCS[name]) for name in PRESETS[preset]]
         self.steps_seen = 0
-        EVENTS.subscribe(self.on_progress)  # a bound method holds `self`
+        EVENTS.subscribe(self.on_progress)  # metoda związana trzyma `self`
 
     def on_progress(self, event: dict) -> None:
         if event["pipeline_id"] == self.pipeline_id:
             self.steps_seen += 1
 
     def close(self) -> None:
-        """Unregisters the pipeline from the bus (a local fix: call it in `finally`)."""
+        """Wyrejestrowuje potok z szyny (naprawa lokalna: wołaj w `finally`)."""
         EVENTS.unsubscribe(self.on_progress)
 
     def run(self, img: Image.Image) -> Image.Image:
         for step, node in enumerate(self.nodes, start=1):
             img = node.func(img)
-            node.last_output = img.tobytes()  # the node's intermediate result
+            node.last_output = img.tobytes()  # wynik pośredni węzła
             EVENTS.publish(
                 {"pipeline_id": self.pipeline_id, "node": node.name, "step": step, "of": len(self.nodes)}
             )
@@ -148,7 +148,7 @@ class FilterPipeline:
 
 
 def load_work_image(path) -> Image.Image:
-    """Loads an image and shrinks it to WORK_SIZE (JPEG: draft speeds up decoding)."""
+    """Wczytuje obraz i zmniejsza do WORK_SIZE (JPEG: draft przyspiesza dekodowanie)."""
     with Image.open(path) as src:
         src.draft("RGB", (WORK_SIZE, WORK_SIZE))
         img = src.convert("RGB")

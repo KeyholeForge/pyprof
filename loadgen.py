@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""loadgen.py — the load generator for the pyprof course (the pixelforge service, port 8040).
+"""loadgen.py — generator ruchu dla kursu pyprof (serwis pixelforge, port 8040).
 
-Simulates realistic user traffic to give the profile (Pyroscope/py-spy/
-memray) something to show: uploads, thumbnails, filters (including the naive F2),
-downloads from the `origin` service (single and batch — F3), batch reports.
+Symuluje realny ruch użytkowników, żeby dać profilowi (Pyroscope/py-spy/
+memray) coś do pokazania: uploady, miniatury, filtry (w tym naiwny W2),
+pobieranie z serwisu `origin` (pojedyncze i wsadowe — W3), raporty wsadowe.
 
-The images for thumbnails/filters/reports are uploaded ONCE at startup
-(a pool of IDs, `--pool`); after that loadgen queries only those IDs. Uploading during
-the run is done only by the `upload` scenario (and `mixed`, in a small share).
+Obrazy do miniatur/filtrów/raportów są wgrywane JEDNORAZOWO na starcie
+(pula ID, `--pool`); dalej loadgen odpytuje tylko te ID. Upload w trakcie
+ruchu robi wyłącznie scenariusz `upload` (i `mixed`, w małej części).
 
-Requires the pixelforge application to be running (`uvicorn app.main:app --port 8040`)
-and — for the `fetch` scenario — the `origin` service from docker-compose (port 8041).
+Wymaga uruchomionej aplikacji pixelforge (`uvicorn app.main:app --port 8040`)
+i — dla scenariusza `fetch` — serwisu `origin` z docker-compose (port 8041).
 
-Examples:
+Przykłady:
     python loadgen.py --duration 30 --concurrency 5
     python loadgen.py --scenario thumbnails --duration 15 --concurrency 10
     python loadgen.py --scenario fetch --duration 20 --concurrency 3
@@ -39,16 +39,16 @@ DEFAULT_BASE_URL = "http://127.0.0.1:8040"
 DEFAULT_ORIGIN_URL = "http://127.0.0.1:8041"
 
 FILTERS = ("grayscale", "blur", "sepia")
-# Thumbnail sizes from a range (not a four-element list): a large key space
-# of (id, size) keys makes the thumbnail cache (F1) grow for the whole run,
-# instead of reaching a plateau after a few hundred requests.
+# Rozmiary miniatur z przedziału (nie czteroelementowej listy): duża przestrzeń
+# kluczy (id, size) sprawia, że cache miniatur (W1) rośnie przez cały bieg,
+# zamiast osiągnąć płaskowyż po kilkuset żądaniach.
 THUMBNAIL_SIZE_RANGE = (32, 384)
 POOL_DEFAULT = 100
 
 SCENARIOS = ("thumbnails", "filters", "fetch", "reports", "upload", "pipeline", "mixed", "final")
 
-# Weights of the `final` scenario (exercise 16): more thumbnails and downloads, fewer reports —
-# every flaw gets enough traffic to be told apart in the combined measurement.
+# Wagi scenariusza `final` (ćwiczenie 16): więcej miniatur i pobrań, mniej raportów —
+# każda wada ma wystarczająco dużo ruchu, żeby dało się ją odróżnić w pomiarze łącznym.
 FINAL_WEIGHTS = {"thumbnails": 40, "filters": 15, "fetch": 25, "reports": 5, "upload": 15}
 
 
@@ -70,14 +70,14 @@ class Stats:
 
 
 class Corpus:
-    """A list of files from the local corpus (data/corpus/) to upload."""
+    """Lista plików z lokalnego korpusu (data/corpus/) do uploadu."""
 
     def __init__(self, corpus_dir: Path) -> None:
         self.files = sorted(corpus_dir.glob("*.jpg"))
         if not self.files:
             raise SystemExit(
-                f"No images in {corpus_dir} — run "
-                f"`python scripts/gen_corpus.py` first."
+                f"Brak obrazów w {corpus_dir} — uruchom najpierw "
+                f"`python scripts/gen_corpus.py`."
             )
 
     def random_file(self) -> Path:
@@ -85,7 +85,7 @@ class Corpus:
 
 
 class OriginCatalog:
-    """A list of URLs of the images served by `origin` (docker-compose, :8041)."""
+    """Lista URL-i obrazów serwowanych przez `origin` (docker-compose, :8041)."""
 
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url.rstrip("/")
@@ -99,9 +99,9 @@ class OriginCatalog:
             self._urls = [f"{self.base_url}/{name}" for name in names]
             if not self._urls:
                 raise SystemExit(
-                    f"The origin service ({self.base_url}) returned no .jpg files — "
-                    f"did docker compose up -d origin start, and does data/origin_images "
-                    f"have content?"
+                    f"Serwis origin ({self.base_url}) nie zwrócił żadnych .jpg — "
+                    f"czy docker compose up -d origin wystartował i data/origin_images "
+                    f"ma zawartość?"
                 )
         return self._urls
 
@@ -138,9 +138,9 @@ async def run_filters(client: httpx.AsyncClient, base_url: str, pool: list[str])
 
 
 async def run_pipeline(client: httpx.AsyncClient, base_url: str, pool: list[str]) -> None:
-    # EXACTLY the same request every time (the same image, the same preset):
-    # memory growth under a repeated identical request tells a leak apart from a cache.
-    resp = await client.get(f"{base_url}/images/{pool[0]}/pipeline/sketch", timeout=30.0)
+    # Za każdym razem DOKŁADNIE to samo żądanie (ten sam obraz, ten sam preset):
+    # wzrost pamięci przy powtarzaniu identycznego żądania odróżnia wyciek od cache.
+    resp = await client.get(f"{base_url}/images/{pool[0]}/pipeline/szkic", timeout=30.0)
     resp.raise_for_status()
 
 
@@ -156,7 +156,7 @@ async def run_fetch(client: httpx.AsyncClient, base_url: str, origin: OriginCata
 
 
 async def run_reports(client: httpx.AsyncClient, base_url: str, pool: list[str], report_ids: int = 0) -> None:
-    if report_ids:  # a constant, large number of IDs in the report (with repeats from the pool)
+    if report_ids:  # stała, duża liczba ID w raporcie (z powtórzeniami z puli)
         ids = random.choices(pool, k=report_ids)
     else:
         ids = random.sample(pool, k=min(len(pool), random.randint(3, 10)))
@@ -165,7 +165,7 @@ async def run_reports(client: httpx.AsyncClient, base_url: str, pool: list[str],
 
 
 async def build_pool(base_url: str, corpus: Corpus, size: int) -> list[str]:
-    """Uploads `size` random images from the corpus (once) and returns their IDs."""
+    """Wgrywa `size` losowych obrazów z korpusu (raz) i zwraca ich ID."""
     async with httpx.AsyncClient() as client:
         return [await upload_random_image(client, base_url, corpus) for _ in range(size)]
 
@@ -207,8 +207,8 @@ async def worker(
                 elif chosen == "reports":
                     await run_reports(client, base_url, pool, report_ids)
                 else:
-                    raise ValueError(f"Unknown scenario: {chosen}")
-            except Exception as exc:  # noqa: BLE001 — loadgen must survive errors of individual requests
+                    raise ValueError(f"Nieznany scenariusz: {chosen}")
+            except Exception as exc:  # noqa: BLE001 — loadgen ma przeżyć błędy pojedynczych requestów
                 ok = False
                 print(f"[worker {worker_id}] {chosen} error: {exc}", file=sys.stderr)
             elapsed_ms = (time.monotonic() - start) * 1000
@@ -223,11 +223,11 @@ async def main_async(args: argparse.Namespace) -> None:
     if args.scenario in ("thumbnails", "filters", "reports", "pipeline", "mixed", "final"):
         t0 = time.monotonic()
         pool = await build_pool(args.base_url, corpus, args.pool)
-        print(f"loadgen: pool of {len(pool)} IDs uploaded in {time.monotonic() - t0:.1f}s")
+        print(f"loadgen: pula {len(pool)} ID wgrana w {time.monotonic() - t0:.1f}s")
 
     deadline = time.monotonic() + args.duration
     print(
-        f"loadgen: scenario={args.scenario} concurrency={args.concurrency} "
+        f"loadgen: scenariusz={args.scenario} concurrency={args.concurrency} "
         f"duration={args.duration}s target={args.base_url}"
     )
 
@@ -238,29 +238,29 @@ async def main_async(args: argparse.Namespace) -> None:
     await asyncio.gather(*workers)
 
     print()
-    print("=== Loadgen summary ===")
-    print(f"  Requests: {stats.requests}  Errors: {stats.errors}")
+    print("=== Podsumowanie loadgenu ===")
+    print(f"  Requesty: {stats.requests}  Błędy: {stats.errors}")
     if stats.latencies_ms:
         latencies = sorted(stats.latencies_ms)
         p50 = latencies[len(latencies) // 2]
         p95 = latencies[int(len(latencies) * 0.95) - 1] if len(latencies) > 1 else latencies[0]
-        print(f"  Latency p50={p50:.1f}ms p95={p95:.1f}ms max={latencies[-1]:.1f}ms")
-    print("  Per scenario:")
+        print(f"  Latencja p50={p50:.1f}ms p95={p95:.1f}ms max={latencies[-1]:.1f}ms")
+    print("  Per scenariusz:")
     for name in sorted(stats.by_scenario):
         errs = stats.errors_by_scenario.get(name, 0)
-        print(f"    {name}: {stats.by_scenario[name]} (errors: {errs})")
+        print(f"    {name}: {stats.by_scenario[name]} (błędy: {errs})")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-c", "--concurrency", type=int, default=5, help="number of parallel workers (default 5)")
-    parser.add_argument("--duration", type=float, default=30.0, help="duration in seconds (default 30)")
-    parser.add_argument("--scenario", choices=SCENARIOS, default="mixed", help="traffic scenario (default mixed)")
-    parser.add_argument("--pool", type=int, default=POOL_DEFAULT, help=f"how many images to upload once at startup as the ID pool (default {POOL_DEFAULT})")
-    parser.add_argument("--report-ids", type=int, default=0, help="a fixed number of IDs in the batch report (default random 3-10)")
-    parser.add_argument("--requests", type=int, default=0, help="an upper limit on the number of requests in a run (default no limit; the run also ends after --duration)")
-    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help=f"pixelforge address (default {DEFAULT_BASE_URL})")
-    parser.add_argument("--origin-url", default=DEFAULT_ORIGIN_URL, help=f"origin service address (default {DEFAULT_ORIGIN_URL})")
+    parser.add_argument("-c", "--concurrency", type=int, default=5, help="liczba równoległych workerów (domyślnie 5)")
+    parser.add_argument("--duration", type=float, default=30.0, help="czas trwania w sekundach (domyślnie 30)")
+    parser.add_argument("--scenario", choices=SCENARIOS, default="mixed", help="scenariusz ruchu (domyślnie mixed)")
+    parser.add_argument("--pool", type=int, default=POOL_DEFAULT, help=f"ile obrazów wgrać raz na starcie jako pulę ID (domyślnie {POOL_DEFAULT})")
+    parser.add_argument("--report-ids", type=int, default=0, help="stała liczba ID w raporcie wsadowym (domyślnie losowo 3-10)")
+    parser.add_argument("--requests", type=int, default=0, help="górny limit liczby żądań w biegu (domyślnie bez limitu; bieg kończy się też po --duration)")
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help=f"adres pixelforge (domyślnie {DEFAULT_BASE_URL})")
+    parser.add_argument("--origin-url", default=DEFAULT_ORIGIN_URL, help=f"adres serwisu origin (domyślnie {DEFAULT_ORIGIN_URL})")
     return parser.parse_args(argv)
 
 
@@ -269,7 +269,7 @@ def main() -> None:
     try:
         asyncio.run(main_async(args))
     except KeyboardInterrupt:
-        print("\nInterrupted.")
+        print("\nPrzerwano.")
 
 
 if __name__ == "__main__":

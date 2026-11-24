@@ -1,9 +1,9 @@
-# ex01 — hint 3: Pseudocode / ready-made command
+# ex01 — hint 3: Pseudokod / gotowa komenda
 
 ```python
 import pyroscope
 
-def init_profiling(app_name, server_address, tags=None, wall=False):  # wall: ignored for now
+def init_profiling(app_name, server_address, tags=None, wall=False):  # wall: na razie ignorowany
     resolved_tags = tags or {}
     pyroscope.configure(
         application_name=app_name,
@@ -16,4 +16,4 @@ def init_profiling(app_name, server_address, tags=None, wall=False):  # wall: ig
     _STATE.update(configured=True, application_name=app_name,
                   server_address=server_address, tags=resolved_tags)
 ```
-Full solution: `solutions/ex01_profiling.py`.
+Pełne rozwiązanie: `solutions/ex01_profiling.py`.

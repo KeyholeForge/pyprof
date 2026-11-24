@@ -1,4 +1,4 @@
-# ex04 — hint 3: Pseudocode / ready-made command
+# ex04 — hint 3: Pseudokod / gotowa komenda
 
 ```python
 from contextlib import contextmanager
@@ -9,4 +9,4 @@ def tag_wrapper(tags):
     with pyroscope.tag_wrapper(tags):
         yield
 ```
-Full solution: `solutions/ex04_profiling.py`.
+Pełne rozwiązanie: `solutions/ex04_profiling.py`.

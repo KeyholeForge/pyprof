@@ -1,13 +1,13 @@
-"""solutions/profile_sepia.py — the reference cProfile script (exercise 03).
+"""solutions/profile_sepia.py — referencyjny skrypt cProfile (ćwiczenie 03).
 
-Profiles the naive sepia filter from app/images.py OFFLINE (no HTTP server) on
-one large corpus image. Result: a .prof file (to open in snakeviz)
-+ a text summary on stdout.
+Profiluje OFFLINE (bez serwera HTTP) naiwny filtr sepia z app/images.py na
+jednym dużym obrazie z korpusu. Wynik: plik .prof (do obejrzenia w snakeviz)
++ tekstowe podsumowanie na stdout.
 
-How to run (from the repo root, after `python scripts/gen_corpus.py`):
+Uruchomienie (z katalogu głównego repo, po `python scripts/gen_corpus.py`):
     python solutions/profile_sepia.py
 
-How to view the result:
+Obejrzenie wyniku:
     snakeviz profiles/ex03_sepia.prof
 """
 
@@ -33,11 +33,11 @@ def main() -> None:
     candidates = sorted(CORPUS_DIR.glob("*_large_*.jpg"))
     if not candidates:
         raise SystemExit(
-            f"No large images in {CORPUS_DIR} — run "
-            f"`python scripts/gen_corpus.py` first."
+            f"Brak dużych obrazów w {CORPUS_DIR} — uruchom najpierw "
+            f"`python scripts/gen_corpus.py`."
         )
     path = candidates[0]
-    print(f"Profiling _sepia_naive on: {path.name}")
+    print(f"Profiluję _sepia_naive na: {path.name}")
 
     with Image.open(path) as img:
         img = img.convert("RGB")
@@ -51,7 +51,7 @@ def main() -> None:
         profiler.disable()
 
     profiler.dump_stats(str(out_path))
-    print(f"Saved: {out_path}")
+    print(f"Zapisano: {out_path}")
 
     stats = pstats.Stats(profiler).sort_stats("cumulative")
     stats.print_stats(15)

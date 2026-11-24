@@ -1,8 +1,8 @@
-"""Writing result files to disk — used by upload, fetch and the filters.
+"""Zapis plików wynikowych na dysk — używany przez upload, fetch i filtry.
 
-This module WORKS from the start (it is not the topic layer of the course), but it
-deliberately contains the performance flaw F4 (disk) — see the `save_bytes` docstring below.
-The fixed version: solutions/storage_snippets.py (exercise 14).
+Ten moduł DZIAŁA od startu (nie jest warstwą-tematem kursu), ale celowo
+zawiera wadę wydajnościową W4 (dysk) — patrz docstring `save_bytes` niżej.
+Naprawiona wersja: solutions/storage_fragmenty.py (ćwiczenie 14).
 """
 
 from __future__ import annotations
@@ -14,18 +14,18 @@ DEFAULT_CHUNK_SIZE = 8192
 
 
 def save_bytes(path: Path, data: bytes, chunk_size: int = DEFAULT_CHUNK_SIZE) -> None:
-    """Writes `data` to the file at `path`, creating parent directories as needed.
+    """Zapisuje `data` do pliku pod `path`, tworząc katalogi nadrzędne w razie potrzeby.
 
-    PERFORMANCE FLAW (F4, exercise 14 — disk): the data is written in small
-    chunks (`chunk_size`), and after EVERY chunk we call `f.flush()` +
-    `os.fsync(f.fileno())`. This forces a physical write to the storage medium
-    (not just to the file system buffer) after every chunk, instead of buffering
-    the whole write and syncing it once at the end. Under loadgen traffic this shows up as:
-      - high time in I/O in a wall-clock profile (oncpu=False, exercise 11),
-      - lots of fsync()/write() calls in `py-spy dump --locals` or strace,
-      - write throughput far lower than the raw disk bandwidth.
-    The fixed version (a buffer + one write + one fsync at the end, or no
-    fsync at all if durability is not required): solutions/storage_snippets.py.
+    WADA WYDAJNOŚCIOWA (W4, ćwiczenie 14 — dysk): dane są zapisywane małymi
+    kawałkami (`chunk_size`), a po KAŻDYM kawałku wywołujemy `f.flush()` +
+    `os.fsync(f.fileno())`. To wymusza fizyczny zapis na nośnik (nie tylko do
+    bufora systemu plików) po każdym chunku, zamiast zbuforować cały zapis
+    i zsynchronizować go raz na końcu. Pod obciążeniem loadgenu widać to jako:
+      - wysoki czas w I/O w profilu wall-clock (oncpu=False, ćwiczenie 11),
+      - mnóstwo wywołań fsync()/write() w `py-spy dump --locals` lub strace,
+      - throughput zapisu dużo niższy niż surowa przepustowość dysku.
+    Naprawiona wersja (bufor + jeden zapis + jeden fsync na końcu, albo bez
+    fsync wcale jeśli trwałość nie jest wymagana): solutions/storage_fragmenty.py.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as f:

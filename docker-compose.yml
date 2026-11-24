@@ -1,13 +1,13 @@
-# The pixelforge application is NOT in this compose file — it runs locally (uvicorn)
-# for fast iteration between exercises.
-# Ports: pixelforge :8040 (locally), Pyroscope :4040, origin :8041 (Docker, 127.0.0.1 only).
+# Aplikacja pixelforge NIE jest w tym compose — uruchamiana lokalnie (uvicorn)
+# dla szybkiej iteracji między ćwiczeniami.
+# Porty: pixelforge :8040 (lokalnie), Pyroscope :4040, origin :8041 (Docker, tylko 127.0.0.1).
 
 services:
   pyroscope:
-    # The official grafana/pyroscope:2.4.2 image is distroless (no shell,
-    # curl, wget) — a real health check cannot run in it. So we build
-    # it locally (docker/pyroscope.Dockerfile): the same pyroscope binary
-    # (static Go, no libc dependency) copied onto alpine with curl.
+    # Oficjalny obraz grafana/pyroscope:2.4.2 jest typu distroless (brak shella,
+    # curl, wget) — nie da się w nim uruchomić realnego healthchecku. Budujemy
+    # go więc lokalnie (docker/pyroscope.Dockerfile): ten sam binarny pyroscope
+    # (statyczny Go, bez zależności libc) skopiowany na alpine z curl.
     build:
       context: .
       dockerfile: docker/pyroscope.Dockerfile
@@ -17,10 +17,10 @@ services:
     volumes:
       - pyroscope_data:/data
     healthcheck:
-      # After startup Pyroscope has built-in readiness delays (metastore ~15s,
-      # ingester ~15s, segment writer ~30s, sequential) — the real time to the
-      # first 200 on /ready is about 60-90s. start_period + retries must
-      # cover that, otherwise the health check will falsely report unhealthy.
+      # Pyroscope po starcie ma wbudowane opóźnienia gotowości (metastore ~15s,
+      # ingester ~15s, segment writer ~30s, sekwencyjnie) — realny czas do
+      # pierwszego 200 na /ready to ok. 60-90s. start_period + retries muszą to
+      # pokryć, inaczej healthcheck fałszywie zgłosi unhealthy.
       test: ["CMD", "curl", "-f", "http://localhost:4040/ready"]
       interval: 5s
       timeout: 3s
@@ -29,16 +29,16 @@ services:
     restart: unless-stopped
 
   origin:
-    # nginx = HTTP/1.1 with keep-alive (python -m http.server speaks HTTP/1.0 and closes
-    # the connection after every response, so keep-alive would have no way to work).
+    # nginx = HTTP/1.1 z keep-alive (python -m http.server mówi HTTP/1.0 i zamyka
+    # połączenie po każdej odpowiedzi, więc keep-alive nie miałby jak zadziałać).
     build:
       context: .
       dockerfile: docker/origin.Dockerfile
     image: pyprof-origin:nginx1.30-netem
     cap_add:
-      - NET_ADMIN        # only for tc netem (network delay)
+      - NET_ADMIN        # tylko dla tc netem (opóźnienie sieciowe)
     environment:
-      # The origin response delay in ms (0 = none). To change it: ORIGIN_DELAY_MS=0 docker compose up -d
+      # Opóźnienie odpowiedzi origin w ms (0 = brak). Zmiana: ORIGIN_DELAY_MS=0 docker compose up -d
       ORIGIN_DELAY_MS: ${ORIGIN_DELAY_MS:-25}
     volumes:
       - ./data/origin_images:/images:ro
@@ -46,7 +46,7 @@ services:
     ports:
       - "127.0.0.1:8041:8041"
     healthcheck:
-      # wget fails for HTTP >=400; the directory listing (200) is enough as a readiness signal.
+      # wget kończy się błędem dla HTTP >=400; listing katalogu (200) wystarcza jako sygnał gotowości.
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8041/"]
       interval: 5s
       timeout: 3s
@@ -55,6 +55,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  # Pyroscope data survives a restart (docker compose down without -v is safe
-  # to repeat). A clean start = `docker compose down -v`.
+  # Dane Pyroscope przetrwają restart (docker compose down bez -v jest bezpieczny
+  # do powtarzania). Czysty start = `docker compose down -v`.
   pyroscope_data:

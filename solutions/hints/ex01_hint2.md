@@ -1,9 +1,9 @@
-# ex01 — hint 2: Which API/tool
+# ex01 — hint 2: Które API/narzędzie
 
-Use `pyroscope.configure(...)` from the `pyroscope-io` package (already in
-`requirements.txt`; add `import pyroscope` at the top of `app/profiling.py`).
-Parameters: `application_name`, `server_address`, `sample_rate=100`,
-`oncpu=True`, `gil_only=True`, `tags`. After the call, update the `_STATE`
-dictionary.
+Użyj `pyroscope.configure(...)` z pakietu `pyroscope-io` (już w
+`requirements.txt`; dodaj `import pyroscope` na górze `app/profiling.py`).
+Parametry: `application_name`, `server_address`, `sample_rate=100`,
+`oncpu=True`, `gil_only=True`, `tags`. Po wywołaniu zaktualizuj słownik
+`_STATE`.
 
-The signature also has a `wall` parameter — you do not use it in this exercise (you will handle it in exercise 11).
+Sygnatura ma też parametr `wall` — w tym ćwiczeniu go nie używasz (obsłużysz go w ćwiczeniu 11).

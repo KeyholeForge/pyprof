@@ -1,9 +1,9 @@
-"""Downloading images from a URL (the `origin` service from docker-compose or another host).
+"""Pobieranie obrazów z URL (serwis `origin` z docker-compose lub inny host).
 
-This module WORKS from the start, but it deliberately contains the network
-flaw F3 (TCP), in two parts:
-  - F3a (exercises 12-13): a new httpx.AsyncClient() on every call.
-  - F3b (exercise 13): fetch-batch downloads the URLs sequentially, not in parallel.
+Ten moduł DZIAŁA od startu, ale celowo zawiera wadę sieciową W3 (TCP),
+w dwóch częściach:
+  - W3a (ćwiczenia 12-13): nowy httpx.AsyncClient() przy każdym wywołaniu.
+  - W3b (ćwiczenie 13): fetch-batch pobiera URL-e sekwencyjnie, nie równolegle.
 """
 
 from __future__ import annotations
@@ -18,19 +18,18 @@ from . import config, storage
 
 
 async def fetch_one(url: str) -> dict:
-    """Downloads a single image from `url` and saves it to local storage.
+    """Pobiera pojedynczy obraz spod `url` i zapisuje go do lokalnego storage.
 
-    NETWORK FLAW (F3a, exercises 12-13): we create a NEW `httpx.AsyncClient()`
-    (the `async with` context manager) on EVERY call of this function, instead
-    of reusing one session with a connection pool. Consequences (measured, origin
-    with a 25 ms delay): every request opens a new TCP connection (203 connections
-    for 203 requests in `/nginx_status`), pays for building the client and its
-    SSLContext (~2.3 ms CPU) and takes about 2x longer than with a shared client
-    (72 ms vs 34 ms).
-    The fixed version (one `httpx.AsyncClient` in `app.state`, passed to
-    `fetch_one(client, url)`): solutions/fetch_snippets.py.
+    WADA SIECIOWA (W3a, ćwiczenia 12-13): tworzymy NOWEGO `httpx.AsyncClient()`
+    (menedżer kontekstu `async with`) przy KAŻDYM wywołaniu tej funkcji, zamiast
+    reużywać jednej sesji z poolem połączeń. Skutki (pomiar, origin z opóźnieniem
+    25 ms): każde żądanie otwiera nowe połączenie TCP (203 połączenia na 203 żądania
+    w `/nginx_status`), płaci za budowę klienta i SSLContext (~2,3 ms CPU) i trwa
+    ok. 2x dłużej niż ze współdzielonym klientem (72 ms vs 34 ms).
+    Naprawiona wersja (jeden `httpx.AsyncClient` w `app.state`, przekazywany do
+    `fetch_one(client, url)`): solutions/fetch_fragmenty.py.
     """
-    async with httpx.AsyncClient() as client:  # F3a: a new client every time
+    async with httpx.AsyncClient() as client:  # W3a: nowy klient za każdym razem
         resp = await client.get(url, timeout=10.0)
         resp.raise_for_status()
         data = resp.content
@@ -43,19 +42,18 @@ async def fetch_one(url: str) -> dict:
 
 
 async def fetch_batch(urls: list[str]) -> list[dict]:
-    """Downloads a list of URLs and returns a list of results (success or error per URL).
+    """Pobiera listę URL-i i zwraca listę wyników (sukces lub błąd per URL).
 
-    NETWORK FLAW (F3b, exercise 13): the URLs are downloaded SEQUENTIALLY in a
-    `for` loop - every `await fetch_one(url)` waits for the previous one to
-    finish. Time grows linearly with the number of URLs (8 URLs with a 25 ms
-    origin delay: about 270 ms sequentially vs about 42 ms in parallel). The
-    `await` wait is not visible in a sampling profile (no stack of a suspended
-    coroutine) - measure the time.
-    The fixed version (parallel downloads through `asyncio.gather` on a
-    shared client): solutions/fetch_snippets.py.
+    WADA SIECIOWA (W3b, ćwiczenie 13): URL-e są pobierane SEKWENCYJNIE w pętli
+    `for` — każdy `await fetch_one(url)` czeka na zakończenie poprzedniego.
+    Czas rośnie liniowo z liczbą URL-i (8 URL-i przy opóźnieniu origin 25 ms:
+    ok. 270 ms sekwencyjnie wobec ok. 42 ms równolegle). Czekania `await` nie widać
+    w profilu próbkującym (brak stosu zawieszonej korutyny) — mierz czas.
+    Naprawiona wersja (równoległe pobieranie przez `asyncio.gather` na
+    współdzielonym kliencie): solutions/fetch_fragmenty.py.
     """
     results: list[dict] = []
-    for url in urls:  # F3b: sequential - should be asyncio.gather(*...)
+    for url in urls:  # W3b: sekwencyjnie — powinno być asyncio.gather(*...)
         try:
             results.append(await fetch_one(url))
         except httpx.HTTPError as exc:

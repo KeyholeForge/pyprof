@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Generates a DETERMINISTIC corpus of test images for the pyprof course.
+"""Generuje DETERMINISTYCZNY korpus obrazów testowych dla kursu pyprof.
 
-Downloads nothing from the internet — all images are drawn locally by
-Pillow (PIL.ImageDraw) with a fixed seed, so the result is 100% repeatable.
+Nie pobiera niczego z internetu — wszystkie obrazy są rysowane lokalnie przez
+Pillow (PIL.ImageDraw) z ustalonym seedem, więc wynik jest w 100% powtarzalny.
 
-Two output directories:
-  data/corpus/          - a large corpus (>=300 images) to feed the pixelforge
-                           application (upload/thumbnails/filters) and the loadgen.
-                           NOT committed (see .gitignore).
-  data/origin_images/    - a smaller set (20 images) served by the
-                           `origin` service in docker-compose.yml at http://127.0.0.1:8041.
-                           It must exist and have content BEFORE `docker compose up`,
-                           because origin mounts this directory as a read-only volume.
+Dwa katalogi wyjściowe:
+  data/corpus/          - duży korpus (>=300 obrazów) do zasilania aplikacji
+                           pixelforge (upload/miniatury/filtry) i loadgenu.
+                           NIE commitowany (patrz .gitignore).
+  data/origin_images/    - mniejszy zestaw (20 obrazów) serwowany przez serwis
+                           `origin` w docker-compose.yml pod http://127.0.0.1:8041.
+                           Musi istnieć i mieć zawartość PRZED `docker compose up`,
+                           bo origin montuje ten katalog jako wolumen tylko-do-odczytu.
 
-How to run:
+Uruchomienie:
     python scripts/gen_corpus.py
 """
 
@@ -32,14 +32,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CORPUS_DIR = REPO_ROOT / "data" / "corpus"
 ORIGIN_DIR = REPO_ROOT / "data" / "origin_images"
 
-# Sizes: small / medium / large (width, height)
+# Rozmiary: mała / średnia / duża (szerokość, wysokość)
 SIZES = {
     "small": (200, 200),
     "medium": (800, 600),
     "large": (2000, 1500),
 }
 
-# Size distribution in the main corpus (proportions summing to 1.0)
+# Rozkład rozmiarów w głównym korpusie (proporcje sumujące się do 1.0)
 CORPUS_SIZE_WEIGHTS = {"small": 0.5, "medium": 0.35, "large": 0.15}
 
 CORPUS_COUNT = 320
@@ -133,7 +133,7 @@ def generate_set(out_dir: Path, count: int, rng: random.Random, size_cycle: bool
     size_names = list(SIZES.keys())
     for i in range(count):
         if size_cycle:
-            # The origin set: an even small/medium/large distribution, in turn.
+            # Zestaw origin: równy rozkład small/medium/large po kolei.
             size_name = size_names[i % len(size_names)]
         else:
             size_name = weighted_size_choice(rng)
@@ -159,13 +159,13 @@ def human_size(num_bytes: int) -> str:
 def main() -> None:
     start = time.monotonic()
 
-    # Two independent but deterministic random streams (seed 42) —
-    # separate random.Random instances, so that the generation order of one
-    # set does not affect the other.
+    # Dwa niezależne, ale deterministyczne strumienie losowości (seed 42) —
+    # osobne instancje random.Random, żeby kolejność generowania jednego
+    # zestawu nie wpływała na drugi.
     corpus_rng = random.Random(SEED)
     origin_rng = random.Random(SEED)
 
-    print(f"Generating a deterministic corpus (seed={SEED})...")
+    print(f"Generuję korpus deterministyczny (seed={SEED})...")
 
     corpus_stats = generate_set(CORPUS_DIR, CORPUS_COUNT, corpus_rng, size_cycle=False)
     origin_stats = generate_set(ORIGIN_DIR, ORIGIN_COUNT, origin_rng, size_cycle=True)
@@ -173,15 +173,15 @@ def main() -> None:
     elapsed = time.monotonic() - start
 
     print()
-    print("=== Corpus generation summary ===")
-    print(f"  {CORPUS_DIR.relative_to(REPO_ROOT)}: {corpus_stats.count} files, "
+    print("=== Podsumowanie generowania korpusu ===")
+    print(f"  {CORPUS_DIR.relative_to(REPO_ROOT)}: {corpus_stats.count} plików, "
           f"{human_size(corpus_stats.total_bytes)}")
-    print(f"  {ORIGIN_DIR.relative_to(REPO_ROOT)}: {origin_stats.count} files, "
+    print(f"  {ORIGIN_DIR.relative_to(REPO_ROOT)}: {origin_stats.count} plików, "
           f"{human_size(origin_stats.total_bytes)}")
     total_count = corpus_stats.count + origin_stats.count
     total_bytes = corpus_stats.total_bytes + origin_stats.total_bytes
-    print(f"  TOTAL: {total_count} files, {human_size(total_bytes)}")
-    print(f"  Generation time: {elapsed:.1f}s")
+    print(f"  RAZEM: {total_count} plików, {human_size(total_bytes)}")
+    print(f"  Czas generowania: {elapsed:.1f}s")
 
 
 if __name__ == "__main__":

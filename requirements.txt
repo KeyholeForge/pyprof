@@ -1,4 +1,4 @@
-# Verified on PyPI 2026-11-01.
+# Zweryfikowane na PyPI 2026-11-01 (patrz .kurs-build-state.md, FAZA 2).
 fastapi==0.162.0
 uvicorn==0.54.0
 httpx==0.28.1
