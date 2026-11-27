@@ -148,3 +148,30 @@ wait caused the reported slowness; that needs a different measurement —
 wall-clock mode in exercise 11 (in my run the same `save_bytes` had 59% there,
 a share of wall-clock samples that cannot be compared 1:1 with shares from CPU
 mode) and the disk exercise 14.
+
+## Exercise 5 — Fixing the naive sepia filter
+
+1. The Pillow matrix operation runs the per-pixel loop in native code (C),
+   without the Python interpreter's per-pixel overhead (bytecode, indexing
+   through the pixel-access object, creating tuples and numbers, type
+   checks) — the same coefficients, much less "wrapping" around them. Both
+   versions are still O(pixels). The results are not bit-for-bit identical:
+   Pillow rounds each channel to the nearest integer and clips it to 0–255 in
+   the same operation, while the loop truncates with `int` and caps with
+   `min(255, …)`, so a channel value may differ by 1 level.
+2. It would reduce the SYMPTOM (fewer pixels = fewer iterations = faster), but
+   it would NOT fix the CAUSE (the algorithm would still be O(pixels) in pure
+   Python) — for the original image size the problem would come back. It would
+   also change the result (a smaller image), so it is not a fix at all.
+3. If the grayscale requests spent more sampled CPU (holding the GIL),
+   `filter=grayscale` could have the largest root Total in the
+   `endpoint=filter` view. Sort the table by Self in the `filter=grayscale`
+   view to see where that weight goes — for example its own Python loop or an
+   inefficient color conversion called from the `grayscale` branch of
+   `apply_filter`; the function with the largest Self for the whole endpoint
+   need not come from that filter. A slow request alone does not tell you
+   either ranking, and you should not assume up front that all filters have
+   the same class of flaw. If the slow part were native code that releases
+   the GIL, this CPU profile (`gil_only=True`) could barely show it — measure
+   the request timings (step 3) and use a wall-clock profile (exercise 11)
+   instead.
