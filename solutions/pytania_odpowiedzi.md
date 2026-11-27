@@ -147,3 +147,30 @@ czekania. Próbkowanie CPU nie mówi, jak długo wątek był zablokowany na
 potrzebny jest inny pomiar — tryb wall-clock w ćwiczeniu 11 (u mnie ten sam
 `save_bytes` miał tam 59 %, czyli udział próbek wall-clock, którego nie da się
 porównać 1:1 z udziałami z trybu CPU) i ćwiczenie 14 o dysku.
+
+## Ćwiczenie 5 — Naprawa naiwnej sepii
+
+1. Operacja macierzowa Pillow wykonuje pętlę po pikselach w kodzie natywnym
+   (C), bez narzutu interpretera Pythona na każdy piksel (bajtkod,
+   indeksowanie przez obiekt dostępu do pikseli, tworzenie krotek i liczb,
+   sprawdzanie typów) — te same współczynniki, dużo mniej „opakowania"
+   wokół nich. Obie wersje nadal są O(piksele). Wyniki nie są identyczne bit
+   w bit: Pillow zaokrągla każdy kanał do najbliższej liczby całkowitej i
+   przycina do 0–255 w tej samej operacji, a pętla obcina przez `int`
+   i ogranicza przez `min(255, …)`, więc wartość kanału może różnić się
+   o 1 poziom.
+2. To zmniejszyłoby OBJAW (mniej pikseli = mniej iteracji = szybciej), ale
+   NIE naprawiłoby PRZYCZYNY (algorytm nadal byłby O(piksele) w czystym
+   Pythonie) — dla oryginalnego rozmiaru obrazu problem by wrócił. Zmieniłoby
+   też wynik (mniejszy obraz), więc w ogóle nie jest naprawą.
+3. Gdyby otagowane żądania grayscale zużywały więcej próbkowanego CPU
+   (z GIL), `filter=grayscale` mógłby mieć największy Total korzenia
+   w widoku `endpoint=filter`. Posortuj tabelę po Self w widoku
+   `filter=grayscale`, żeby zobaczyć, gdzie trafia ta waga — np. własna pętla
+   w Pythonie albo nieoptymalna konwersja kolorów wywoływana z gałęzi
+   `grayscale` w `apply_filter`; funkcja o największym Self całego endpointu
+   nie musi pochodzić z tego filtra. Samo wolne żądanie nie przesądza żadnego
+   z tych rankingów i nie zakładaj z góry, że wszystkie filtry mają tę samą
+   klasę wady. Gdyby wolna część była kodem natywnym zwalniającym GIL, ten
+   profil CPU (`gil_only=True`) mógłby jej prawie nie pokazać — zmierz czasy
+   żądań (krok 3) i użyj profilu wall-clock (ćwiczenie 11).
